@@ -4,7 +4,7 @@ import Entity.EstadoPago;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-@Converter(autoApply = true)
+@Converter(autoApply = false)
 public class EstadoPagoConverter implements AttributeConverter<EstadoPago, String> {
 
     @Override

@@ -9,7 +9,7 @@ import jakarta.persistence.Converter;
  * Convierte entre el enum Java y el valor String en la BD
  * @author Usuario
  */
-@Converter(autoApply = true)
+@Converter(autoApply = false)
 public class ColorConverter implements AttributeConverter<Color, String> {
 
     @Override

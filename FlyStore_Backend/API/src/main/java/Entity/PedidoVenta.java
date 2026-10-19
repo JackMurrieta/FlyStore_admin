@@ -30,6 +30,7 @@ public class PedidoVenta {
     @Column(name = "costo_envio", nullable = false)
     private Double costoEnvio = 0.0;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "estado_venta", nullable = false)
     private EstadoVenta estadoVenta = EstadoVenta.PENDIENTE;
 

@@ -4,7 +4,7 @@ import Entity.TipoUsuario;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-@Converter(autoApply = true)
+@Converter(autoApply = false)
 public class TipoUsuarioConverter implements AttributeConverter<TipoUsuario, String> {
 
     @Override

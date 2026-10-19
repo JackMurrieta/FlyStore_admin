@@ -20,6 +20,7 @@ public class Cliente extends Usuario {
     @Column(length = 255)
     private String direccion;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_cliente", nullable = false)
     private TipoCliente tipoCliente = TipoCliente.BASE;
 

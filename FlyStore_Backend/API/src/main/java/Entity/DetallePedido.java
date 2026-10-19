@@ -35,6 +35,7 @@ public class DetallePedido {
     @Column(nullable = false)
     private Integer cantidad;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_precio", nullable = false)
     private TipoPrecio tipoPrecio;
 

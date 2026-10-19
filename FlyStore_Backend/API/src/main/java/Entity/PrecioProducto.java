@@ -27,6 +27,7 @@ public class PrecioProducto {
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_precio", nullable = false)
     private TipoPrecio tipoPrecio;
 

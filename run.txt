@@ -1,0 +1,12 @@
+Te recomiendo utilizar Flyway, para no tener que ejecutar manualmente el SQL cada vez que inicies el proyecto.
+1. Agrega la dependencia de Flyway a tu pom.xml.
+2. Crea el archivo src/main/resources/db/migration/V1__crear_enums.sql.
+3. Coloca ahí las sentencias CREATE TYPE.
+4. Configura Hibernate con:
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
+
+
+Flyway ejecutará la migración antes de que Hibernate valide el esquema.
+
+Importante: ddl-auto=validate no crea las tablas. Si todavía no existen, también necesitarás una migración que las cree, o una estrategia inicial controlada para generarlas.
