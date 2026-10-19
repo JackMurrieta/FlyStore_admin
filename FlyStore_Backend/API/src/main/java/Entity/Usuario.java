@@ -6,51 +6,81 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
- * Entidad Usuario - Se mapea a la tabla "usuarios" en Supabase
+ * Entidad Usuario - Clase base para Admin, Cliente y Empleado
+ * Vinculada con auth.users de Supabase mediante auth_user_id
+ * Usa herencia SINGLE_TABLE
  * @author Usuario
  */
 @Entity
 @Table(name = "usuarios")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_usuario", discriminatorType = DiscriminatorType.STRING)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Usuario {
+public abstract class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * UUID del usuario en auth.users de Supabase
+     * Este campo vincula el usuario de aplicación con el usuario de autenticación
+     * Es único porque un usuario de auth solo puede tener un perfil en la app
+     */
+    @Column(name = "auth_user_id", nullable = false, unique = true, columnDefinition = "UUID")
+    private UUID authUserId;
+
+    @Column(nullable = false, length = 200)
+    private String nombre;
+
+    @Column(length = 200)
+    private String apellidos;
+
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "nombre_completo", length = 255)
-    private String nombreCompleto;
+    @Column(length = 20)
+    private String telefono;
 
     @Column(name = "foto_perfil")
     private String fotoPerfil;
 
-    @Column(name = "provider")
-    private String provider; // google, email, etc.
+    @Column(nullable = false)
+    private Boolean activo = true;
 
-    @Column(name = "provider_id")
-    private String providerId;
+    @Column(name = "fecha_registro")
+    private LocalDateTime fechaRegistro;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "fecha_eliminacion")
+    private LocalDateTime fechaEliminacion;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        fechaRegistro = LocalDateTime.now();
+        if (activo == null) {
+            activo = true;
+        }
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    /**
+     * Marca el usuario como inactivo (soft delete)
+     * No elimina físicamente el registro para preservar datos históricos
+     */
+    public void desactivar() {
+        this.activo = false;
+        this.fechaEliminacion = LocalDateTime.now();
+    }
+
+    /**
+     * Reactiva un usuario previamente desactivado
+     */
+    public void reactivar() {
+        this.activo = true;
+        this.fechaEliminacion = null;
     }
 }

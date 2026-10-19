@@ -55,4 +55,7 @@ public class CodigoDescuento {
 
     @ManyToMany(mappedBy = "codigosDescuento")
     private List<Producto> productos = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "codigosAplicados")
+    private List<DetallePedido> detallesAplicados = new ArrayList<>();
 }

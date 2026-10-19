@@ -11,9 +11,17 @@
 
     <properties>
         <exec.mainClass>org.itson.api.API</exec.mainClass>
+        <start-class>org.itson.api.API</start-class>
     </properties>
 
     <dependencies>
+        <!-- Módulo de DTOs -->
+        <dependency>
+            <groupId>org.itson</groupId>
+            <artifactId>DTOs</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- Spring Boot Web Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
