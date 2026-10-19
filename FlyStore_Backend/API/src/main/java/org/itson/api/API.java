@@ -1,16 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package org.itson.api;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 /**
- *
+ * Clase principal de la aplicación Spring Boot
  * @author Usuario
  */
+@SpringBootApplication
 public class API {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        SpringApplication.run(API.class, args);
     }
 }
