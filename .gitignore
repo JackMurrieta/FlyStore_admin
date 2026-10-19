@@ -22,4 +22,24 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Java/Maven
 /FlyStore_Backend/DTOs/target/
+/FlyStore_Backend/API/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Spring Boot - Archivos de configuración con credenciales sensibles
+*.properties
+!**/src/main/resources/application-template.properties
+application.yml
+application.yaml
+application-*.properties
+application-*.yml
+application-*.yaml
+
+# Claude Code
+/.claude/
+.claude/
