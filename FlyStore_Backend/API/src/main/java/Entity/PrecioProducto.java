@@ -27,8 +27,8 @@ public class PrecioProducto {
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_precio", nullable = false)
+    @Convert(converter = EnumConvert.TipoPrecioConverter.class)
+    @Column(name = "tipo_precio", nullable = false, columnDefinition = "tipo_precio")
     private TipoPrecio tipoPrecio;
 
     @Column(nullable = false, precision = 10, scale = 2)

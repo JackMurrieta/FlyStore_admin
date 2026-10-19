@@ -25,12 +25,12 @@ public class VarianteProducto {
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "color", nullable = false)
+    @Convert(converter = EnumConvert.ColorConverter.class)
+    @Column(name = "color", nullable = false, columnDefinition = "color")
     private Color color;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "talla", nullable = false)
+    @Convert(converter = EnumConvert.TallaConverter.class)
+    @Column(name = "talla", nullable = false, columnDefinition = "talla")
     private Talla talla;
 
     @Column(nullable = false, unique = true, length = 100)

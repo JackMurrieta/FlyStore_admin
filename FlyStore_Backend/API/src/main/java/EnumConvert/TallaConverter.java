@@ -1,4 +1,4 @@
-package Entity.converter;
+package EnumConvert;
 
 import Entity.Talla;
 import jakarta.persistence.AttributeConverter;

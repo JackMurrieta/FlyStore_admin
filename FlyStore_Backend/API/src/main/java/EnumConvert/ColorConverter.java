@@ -1,4 +1,4 @@
-package Entity.converter;
+package EnumConvert;
 
 import Entity.Color;
 import jakarta.persistence.AttributeConverter;

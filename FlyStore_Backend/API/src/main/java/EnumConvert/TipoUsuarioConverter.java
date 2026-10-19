@@ -1,4 +1,4 @@
-package Entity.converter;
+package EnumConvert;
 
 import Entity.TipoUsuario;
 import jakarta.persistence.AttributeConverter;

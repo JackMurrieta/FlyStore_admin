@@ -20,8 +20,8 @@ public class Cliente extends Usuario {
     @Column(length = 255)
     private String direccion;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_cliente", nullable = false)
+    @Convert(converter = EnumConvert.TipoClienteConverter.class)
+    @Column(name = "tipo_cliente", nullable = false, columnDefinition = "tipo_cliente")
     private TipoCliente tipoCliente = TipoCliente.BASE;
 
     @OneToMany(mappedBy = "cliente")

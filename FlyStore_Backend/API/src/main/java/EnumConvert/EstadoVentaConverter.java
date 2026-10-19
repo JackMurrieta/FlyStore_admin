@@ -1,4 +1,4 @@
-package Entity.converter;
+package EnumConvert;
 
 import Entity.EstadoVenta;
 import jakarta.persistence.AttributeConverter;

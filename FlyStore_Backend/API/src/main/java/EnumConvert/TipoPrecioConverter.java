@@ -1,4 +1,4 @@
-package Entity.converter;
+package EnumConvert;
 
 import Entity.TipoPrecio;
 import jakarta.persistence.AttributeConverter;

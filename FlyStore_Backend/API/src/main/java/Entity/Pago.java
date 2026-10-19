@@ -35,7 +35,7 @@ public abstract class Pago {
     @Column(name = "fecha_pago")
     private LocalDateTime fechaPago;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado_pago", nullable = false)
+    @Convert(converter = EnumConvert.EstadoPagoConverter.class)
+    @Column(name = "estado_pago", nullable = false, columnDefinition = "estado_pago")
     private EstadoPago estadoPago = EstadoPago.PENDIENTE;
 }

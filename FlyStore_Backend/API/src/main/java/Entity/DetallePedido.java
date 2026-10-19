@@ -35,8 +35,8 @@ public class DetallePedido {
     @Column(nullable = false)
     private Integer cantidad;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_precio", nullable = false)
+    @Convert(converter = EnumConvert.TipoPrecioConverter.class)
+    @Column(name = "tipo_precio", nullable = false, columnDefinition = "tipo_precio")
     private TipoPrecio tipoPrecio;
 
     @Column(name = "precio_unitario", nullable = false)
