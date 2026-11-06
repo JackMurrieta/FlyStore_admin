@@ -15,4 +15,22 @@ public class PagoEfectivo extends Pago {
 
     @Column
     private BigDecimal cambio;
+
+    public BigDecimal getCantidadRecibida() {
+        return cantidadRecibida;
+    }
+
+    public void setCantidadRecibida(BigDecimal cantidadRecibida) {
+        this.cantidadRecibida = cantidadRecibida;
+    }
+
+    public BigDecimal getCambio() {
+        return cambio;
+    }
+
+    public void setCambio(BigDecimal cambio) {
+        this.cambio = cambio;
+    }
+    
+    
 }

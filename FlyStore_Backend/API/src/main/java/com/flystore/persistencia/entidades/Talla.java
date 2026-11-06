@@ -1,6 +1,7 @@
 package com.flystore.persistencia.entidades;
 
 import jakarta.persistence.*;
+import java.util.List;
 
 /**
  * Entidad Talla - Tallas disponibles asociadas a un tipo de talla
@@ -19,4 +20,33 @@ public class Talla {
 
     @Column
     private String etiqueta;
+
+    @OneToMany(mappedBy = "talla")
+    private List<VarianteProducto> variantesProducto;
+
+    public Long getId() {
+        return id;
+    }
+
+    public TipoTalla getTipoTalla() {
+        return tipoTalla;
+    }
+
+    public String getEtiqueta() {
+        return etiqueta;
+    }
+
+    public void setEtiqueta(String etiqueta) {
+        this.etiqueta = etiqueta;
+    }
+
+    public List<VarianteProducto> getVariantesProducto() {
+        return variantesProducto;
+    }
+
+    public void setVariantesProducto(List<VarianteProducto> variantesProducto) {
+        this.variantesProducto = variantesProducto;
+    }
+    
+    
 }

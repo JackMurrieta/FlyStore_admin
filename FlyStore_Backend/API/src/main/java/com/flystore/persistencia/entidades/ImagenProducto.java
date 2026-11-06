@@ -26,4 +26,38 @@ public class ImagenProducto {
 
     @Column
     private Integer orden;
+
+    public Long getId() {
+        return id;
+    }
+
+    public Producto getProducto() {
+        return producto;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    public String getUrlImagen() {
+        return urlImagen;
+    }
+
+    public void setUrlImagen(String urlImagen) {
+        this.urlImagen = urlImagen;
+    }
+
+    public Integer getOrden() {
+        return orden;
+    }
+
+    public void setOrden(Integer orden) {
+        this.orden = orden;
+    }
+    
+    
 }

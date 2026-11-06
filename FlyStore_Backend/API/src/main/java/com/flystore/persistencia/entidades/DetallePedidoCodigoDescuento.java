@@ -19,4 +19,22 @@ public class DetallePedidoCodigoDescuento {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "codigo_descuento_id")
     private CodigoDescuento codigoDescuento;
+
+    public DetallePedido getDetallePedido() {
+        return detallePedido;
+    }
+
+    public void setDetallePedido(DetallePedido detallePedido) {
+        this.detallePedido = detallePedido;
+    }
+
+    public CodigoDescuento getCodigoDescuento() {
+        return codigoDescuento;
+    }
+
+    public void setCodigoDescuento(CodigoDescuento codigoDescuento) {
+        this.codigoDescuento = codigoDescuento;
+    }
+    
+    
 }

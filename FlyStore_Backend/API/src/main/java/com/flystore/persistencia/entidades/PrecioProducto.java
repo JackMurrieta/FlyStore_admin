@@ -30,4 +30,38 @@ public class PrecioProducto {
 
     @Column
     private BigDecimal precio;
+
+    public Long getId() {
+        return id;
+    }
+
+    public Producto getProducto() {
+        return producto;
+    }
+
+    public TipoPrecio getTipoPrecio() {
+        return tipoPrecio;
+    }
+
+    public void setTipoPrecio(TipoPrecio tipoPrecio) {
+        this.tipoPrecio = tipoPrecio;
+    }
+
+    public Integer getMinPiezas() {
+        return minPiezas;
+    }
+
+    public void setMinPiezas(Integer minPiezas) {
+        this.minPiezas = minPiezas;
+    }
+
+    public BigDecimal getPrecio() {
+        return precio;
+    }
+
+    public void setPrecio(BigDecimal precio) {
+        this.precio = precio;
+    }
+    
+    
 }

@@ -19,4 +19,22 @@ public class ProductoCodigoDescuento {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "codigo_descuento_id")
     private CodigoDescuento codigoDescuento;
+
+    public Producto getProducto() {
+        return producto;
+    }
+
+    public void setProducto(Producto producto) {
+        this.producto = producto;
+    }
+
+    public CodigoDescuento getCodigoDescuento() {
+        return codigoDescuento;
+    }
+
+    public void setCodigoDescuento(CodigoDescuento codigoDescuento) {
+        this.codigoDescuento = codigoDescuento;
+    }
+    
+    
 }

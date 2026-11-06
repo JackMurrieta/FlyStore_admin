@@ -14,4 +14,22 @@ public class PagoTransferencia extends Pago {
 
     @Column(name = "numero_referencia")
     private String numeroReferencia;
+
+    public String getComprobantePagoUrl() {
+        return comprobantePagoUrl;
+    }
+
+    public void setComprobantePagoUrl(String comprobantePagoUrl) {
+        this.comprobantePagoUrl = comprobantePagoUrl;
+    }
+
+    public String getNumeroReferencia() {
+        return numeroReferencia;
+    }
+
+    public void setNumeroReferencia(String numeroReferencia) {
+        this.numeroReferencia = numeroReferencia;
+    }
+    
+    
 }

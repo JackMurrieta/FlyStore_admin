@@ -23,4 +23,26 @@ public class DetallePedidoVarianteProducto {
 
     @Column(name = "cantidad_en_combo", nullable = false)
     private Integer cantidadEnCombo;
+
+    public Long getId() {
+        return id;
+    }
+
+    public DetallePedido getDetallePedido() {
+        return detallePedido;
+    }
+
+    public VarianteProducto getVarianteProducto() {
+        return varianteProducto;
+    }
+
+    public Integer getCantidadEnCombo() {
+        return cantidadEnCombo;
+    }
+
+    public void setCantidadEnCombo(Integer cantidadEnCombo) {
+        this.cantidadEnCombo = cantidadEnCombo;
+    }
+    
+    
 }
