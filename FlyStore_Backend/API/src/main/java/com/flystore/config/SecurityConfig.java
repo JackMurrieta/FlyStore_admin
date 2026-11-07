@@ -1,54 +1,94 @@
 package com.flystore.config;
 
-import com.flystore.security.SupabaseJwtFilter;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Configuración de seguridad de Spring Security
- * Integra el filtro de JWT de Supabase y define las reglas de autorización
+ * SOLID: SRP - Solo configuración de seguridad
+ * Backend actúa como wrapper de Supabase:
+ * - Valida JWT de Supabase usando OAuth2 Resource Server
+ * - Frontend NO tiene acceso directo a Supabase
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    @Autowired
-    private SupabaseJwtFilter supabaseJwtFilter;
+    private final SupabaseJwtConverter jwtConverter;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
+    public SecurityConfig(SupabaseJwtConverter jwtConverter) {
+        this.jwtConverter = jwtConverter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Deshabilitar CSRF ya que usamos JWT (stateless)
+            // Deshabilitar CSRF (usamos JWT stateless)
             .csrf(csrf -> csrf.disable())
 
-            // Configurar sesión como stateless (sin sesiones HTTP)
+            // Configurar CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // Stateless (sin sesiones HTTP)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // Configurar reglas de autorización
+            // Reglas de autorización
             .authorizeHttpRequests(auth -> auth
-                // MODO DESARROLLO: Permitir todas las rutas sin autenticación
-                // TODO: En producción, descomentar las reglas restrictivas abajo
-                .anyRequest().permitAll()
+                // Rutas públicas
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/health", "/actuator/health").permitAll()
 
-                // MODO PRODUCCIÓN: Descomentar estas líneas y comentar la línea de arriba
-                // .requestMatchers("/api/public/**").permitAll()
-                // .requestMatchers("/health").permitAll()
-                // .requestMatchers("/actuator/**").permitAll()
-                // .requestMatchers("/api/admin/**").hasRole("AUTHENTICATED")
+                // Rutas protegidas (descomenta en producción)
+                // .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "EMPLEADO")
                 // .anyRequest().authenticated()
+
+                // MODO DESARROLLO: permitir todo
+                .anyRequest().permitAll()
             )
 
-            // Agregar filtro de JWT antes del filtro de autenticación estándar
-            .addFilterBefore(supabaseJwtFilter, UsernamePasswordAuthenticationFilter.class);
+            // Configurar OAuth2 Resource Server para validar JWT de Supabase
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter))
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+            );
 
         return http.build();
+    }
+
+    /**
+     * Configuración CORS centralizada
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(List.of(frontendUrl));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 }

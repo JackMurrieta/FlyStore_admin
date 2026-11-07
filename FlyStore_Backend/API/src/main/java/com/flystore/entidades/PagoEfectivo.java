@@ -1,4 +1,4 @@
-package com.flystore.persistencia.entidades;
+package com.flystore.entidades;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

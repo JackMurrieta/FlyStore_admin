@@ -1,5 +1,4 @@
-package com.flystore.persistencia.entidades;
-
+package com.flystore.entidades;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;

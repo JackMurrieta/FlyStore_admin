@@ -1,4 +1,4 @@
-package com.flystore.persistencia.entidades;
+package com.flystore.entidades;
 
 /**
  * Enum TipoPrecio - Define los tipos de precio disponibles

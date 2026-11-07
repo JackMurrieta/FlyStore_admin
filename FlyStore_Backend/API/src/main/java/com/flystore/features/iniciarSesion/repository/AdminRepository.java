@@ -1,6 +1,6 @@
 package com.flystore.features.iniciarSesion.repository;
 
-import com.flystore.persistencia.entidades.Admin;
+import com.flystore.entidades.Admin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

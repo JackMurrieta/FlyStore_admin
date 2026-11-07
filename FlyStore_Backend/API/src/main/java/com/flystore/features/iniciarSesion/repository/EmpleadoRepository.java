@@ -1,6 +1,6 @@
 package com.flystore.features.iniciarSesion.repository;
 
-import com.flystore.persistencia.entidades.Empleado;
+import com.flystore.entidades.Empleado;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

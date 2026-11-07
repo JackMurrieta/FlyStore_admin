@@ -1,4 +1,4 @@
-package com.flystore.persistencia.entidades;
+package com.flystore.entidades;
 
 import java.io.Serializable;
 import java.util.Objects;

@@ -1,4 +1,4 @@
-package com.flystore.persistencia.entidades;
+package com.flystore.entidades;
 
 /**
  * Enum EstadoPago - Estados del pago

@@ -1,118 +1,85 @@
 package com.flystore.features.iniciarSesion.controller;
 
-import CU_iniciarSesion_DTOs.AuthResponseDTO;
-import CU_iniciarSesion_DTOs.LoginRequestDTO;
-import CU_iniciarSesion_DTOs.RegisterRequestDTO;
-import com.flystore.features.iniciarSesion.service.AuthService;
+import CU_iniciarSesion_DTOs.AuthResponse;
+import CU_iniciarSesion_DTOs.LoginRequest;
+import CU_iniciarSesion_DTOs.RegisterRequest;
+import com.flystore.features.iniciarSesion.BO.IAuthBO;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 /**
- * Controlador REST para autenticación de usuarios
- * Feature: Iniciar Sesión
- * Actúa como wrapper de Supabase Auth API
+ * Controller para caso de uso: Iniciar Sesión
+ * SOLID: SRP - Solo maneja HTTP (entrada/salida, códigos de respuesta)
+ * GRASP: Controller - Coordina el caso de uso de autenticación
+ * SOLID: DIP - Depende de IAuthBO (abstracción), no de implementación
  */
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")  // TODO: Configurar CORS apropiadamente en producción
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
-    @Autowired
-    private AuthService authService;
+    private final IAuthBO authBO;
+
+    // SOLID: Inyección por CONSTRUCTOR (no @Autowired en campos)
+    public AuthController(IAuthBO authBO) {
+        this.authBO = authBO;
+    }
 
     /**
      * POST /api/auth/login
      * Inicia sesión de usuario
-     *
-     * @param loginRequest Credenciales de usuario (email y password)
-     * @return Token JWT y datos del usuario
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest,
-                                    BindingResult bindingResult) {
-        try {
-            // Validar errores de validación
-            if (bindingResult.hasErrors()) {
-                Map<String, String> errors = bindingResult.getFieldErrors().stream()
-                        .collect(Collectors.toMap(
-                                error -> error.getField(),
-                                error -> error.getDefaultMessage()
-                        ));
-                return ResponseEntity.badRequest().body(errors);
-            }
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        logger.info("POST /api/auth/login - email: {}", request.email());
 
-            logger.info("Solicitud de login para: {}", loginRequest.getEmail());
+        AuthResponse response = authBO.login(request);
 
-            AuthResponseDTO response = authService.login(loginRequest);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            logger.error("Error en login", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Credenciales inválidas");
-            error.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-        }
-    }
-
-    /**
-     * POST /api/auth/register
-     * Registra un nuevo usuario
-     *
-     * @param registerRequest Datos del nuevo usuario
-     * @return Token JWT y datos del usuario creado
-     */
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequest,
-                                       BindingResult bindingResult) {
-        try {
-            // Validar errores de validación
-            if (bindingResult.hasErrors()) {
-                Map<String, String> errors = bindingResult.getFieldErrors().stream()
-                        .collect(Collectors.toMap(
-                                error -> error.getField(),
-                                error -> error.getDefaultMessage()
-                        ));
-                return ResponseEntity.badRequest().body(errors);
-            }
-
-            logger.info("Solicitud de registro para: {}", registerRequest.getEmail());
-
-            AuthResponseDTO response = authService.register(registerRequest);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-
-        } catch (Exception e) {
-            logger.error("Error en registro", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Error al registrar usuario");
-            error.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        }
-    }
-
-    /**
-     * GET /api/auth/health
-     * Endpoint para verificar que el servicio de auth está funcionando
-     */
-    @GetMapping("/health")
-    public ResponseEntity<?> health() {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "OK");
-        response.put("service", "Auth Service");
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/auth/registro
+     * Registra un nuevo usuario
+     */
+    @PostMapping("/registro")
+    public ResponseEntity<AuthResponse> registro(@Valid @RequestBody RegisterRequest request) {
+        logger.info("POST /api/auth/registro - email: {}", request.email());
+
+        AuthResponse response = authBO.registrar(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * POST /api/auth/refresh
+     * Refresca el access token
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@RequestBody String refreshToken) {
+        logger.info("POST /api/auth/refresh");
+
+        AuthResponse response = authBO.refrescarToken(refreshToken);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/auth/logout
+     * Cierra la sesión del usuario
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        logger.info("POST /api/auth/logout");
+
+        String accessToken = authHeader.replace("Bearer ", "");
+        authBO.cerrarSesion(accessToken);
+
+        return ResponseEntity.noContent().build();
     }
 }
