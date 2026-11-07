@@ -1,5 +1,5 @@
 
-package DTOs;
+package CU_iniciarSesion_DTOs;
 import lombok.Data;
 import java.util.UUID;
 

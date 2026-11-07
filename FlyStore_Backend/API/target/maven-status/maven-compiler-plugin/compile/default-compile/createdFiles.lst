@@ -1,3 +1,5 @@
+com\flystore\security\DatabaseContextManager.class
+com\flystore\config\SupabaseProperties.class
 com\flystore\persistencia\entidades\TipoTalla.class
 com\flystore\persistencia\entidades\Empleado.class
 com\flystore\persistencia\entidades\ProductoCodigoDescuentoPK.class
@@ -5,12 +7,15 @@ com\flystore\persistencia\entidades\EstadoPago.class
 com\flystore\persistencia\entidades\TipoPrecio.class
 com\flystore\persistencia\entidades\VarianteProducto.class
 com\flystore\persistencia\entidades\Marca.class
-Controller\HealthController.class
+com\flystore\config\RLSInitializer.class
 com\flystore\persistencia\entidades\DetallePedidoCodigoDescuento.class
-org\itson\api\API.class
 com\flystore\persistencia\entidades\PagoEfectivo.class
+com\flystore\features\iniciarSesion\repository\EmpleadoRepository.class
 com\flystore\persistencia\entidades\Usuario.class
+com\flystore\features\iniciarSesion\controller\AuthController.class
+com\flystore\features\iniciarSesion\repository\AdminRepository.class
 com\flystore\persistencia\entidades\ImagenProducto.class
+com\flystore\security\SupabaseJwtFilter.class
 com\flystore\persistencia\entidades\Cliente.class
 com\flystore\persistencia\entidades\DetallePedidoCodigoDescuentoPK.class
 com\flystore\persistencia\entidades\TipoCliente.class
@@ -19,7 +24,9 @@ com\flystore\persistencia\entidades\PagoTransferencia.class
 com\flystore\persistencia\entidades\Color.class
 com\flystore\persistencia\entidades\Admin.class
 com\flystore\persistencia\entidades\Producto.class
+com\flystore\features\iniciarSesion\service\AuthService.class
 com\flystore\persistencia\entidades\Pago.class
+com\flystore\features\iniciarSesion\repository\ClienteRepository.class
 com\flystore\persistencia\entidades\ProductoCodigoDescuento.class
 com\flystore\persistencia\entidades\EstadoProducto.class
 com\flystore\persistencia\entidades\Subcategoria.class
@@ -29,6 +36,9 @@ com\flystore\persistencia\entidades\DetallePedidoVarianteProducto.class
 com\flystore\persistencia\entidades\DatosEntrega.class
 com\flystore\persistencia\entidades\DatoBancario.class
 com\flystore\persistencia\entidades\Talla.class
+com\flystore\config\SupabaseProperties$Jwt.class
 com\flystore\persistencia\entidades\CodigoDescuento.class
 com\flystore\persistencia\entidades\PrecioProducto.class
+com\flystore\API.class
 com\flystore\persistencia\entidades\PedidoVenta.class
+com\flystore\config\SecurityConfig.class
