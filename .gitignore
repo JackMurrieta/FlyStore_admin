@@ -43,3 +43,18 @@ application-*.yaml
 # Claude Code
 /.claude/
 .claude/
+
+# Maven
+target/
+*.jar
+*.war
+
+# IDEs
+.idea/
+*.iml
+nbproject/private/
+nbactions.xml
+
+# Secretos
+.env
+*.local.properties
