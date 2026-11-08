@@ -40,4 +40,11 @@ public interface ISupabaseAuthGateway {
      * @param accessToken Access token del usuario
      */
     void cerrarSesion(String accessToken);
+
+    /**
+     * Obtiene información del usuario usando un access token
+     * @param accessToken Access token del usuario
+     * @return Sesión de Supabase con información del usuario
+     */
+    SupabaseSession obtenerUsuario(String accessToken);
 }

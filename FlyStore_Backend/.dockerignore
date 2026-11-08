@@ -1,0 +1,78 @@
+# ============================================================================
+# .dockerignore - Archivos excluidos del contexto de Docker build
+# ============================================================================
+# Reduce el tamaño del contexto y acelera el build
+# ============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Maven build artifacts
+target/
+**/target/
+!API/target/*.jar
+
+# IDEs
+.idea
+*.iml
+.vscode
+*.swp
+*.swo
+.DS_Store
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.bak
+*~
+
+# Documentación
+README.md
+*.md
+!Dockerfile
+
+# Configuración local
+.env
+.env.local
+*.example
+application.properties
+!application-prod.properties
+
+# Tests
+**/src/test/
+
+# Node modules (si hubiera)
+node_modules/
+
+# Railway
+.railwayignore
+railway.json
+railway.toml
+
+# StarUML
+StarUml/
+*.mdj
+*.mfj
+
+# Claude Code
+.claude/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Archivos compilados intermedios
+*.class
+
+# Maven wrapper (se descarga en el build)
+.mvn/
+mvnw
+mvnw.cmd

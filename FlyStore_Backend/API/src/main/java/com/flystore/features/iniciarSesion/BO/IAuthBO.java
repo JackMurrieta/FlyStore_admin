@@ -38,4 +38,18 @@ public interface IAuthBO {
      * @param accessToken Access token del usuario
      */
     void cerrarSesion(String accessToken);
+
+    /**
+     * Sincroniza el usuario de Google con la base de datos local
+     * @param accessToken Access token del usuario de Supabase
+     * @return Respuesta con datos del usuario
+     */
+    AuthResponse sincronizarUsuarioGoogle(String accessToken);
+
+    /**
+     * Genera la URL de OAuth de Google a través de Supabase
+     * @param callbackUrl URL a la que Supabase debe redirigir después de la autenticación
+     * @return URL completa para iniciar el flujo de OAuth
+     */
+    String getGoogleOAuthUrl(String callbackUrl);
 }

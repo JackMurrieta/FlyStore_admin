@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,12 +29,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final SupabaseJwtConverter jwtConverter;
+    private final CookieJwtFilter cookieJwtFilter;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    public SecurityConfig(SupabaseJwtConverter jwtConverter) {
+    public SecurityConfig(SupabaseJwtConverter jwtConverter, CookieJwtFilter cookieJwtFilter) {
         this.jwtConverter = jwtConverter;
+        this.cookieJwtFilter = cookieJwtFilter;
     }
 
     @Bean
@@ -63,6 +66,10 @@ public class SecurityConfig {
                 // MODO DESARROLLO: permitir todo
                 .anyRequest().permitAll()
             )
+
+            // 🆕 Agregar filtro que extrae JWT desde cookies HttpOnly
+            // DEBE ir ANTES de OAuth2ResourceServer para que el token esté disponible
+            .addFilterBefore(cookieJwtFilter, UsernamePasswordAuthenticationFilter.class)
 
             // Configurar OAuth2 Resource Server para validar JWT de Supabase
             .oauth2ResourceServer(oauth2 -> oauth2

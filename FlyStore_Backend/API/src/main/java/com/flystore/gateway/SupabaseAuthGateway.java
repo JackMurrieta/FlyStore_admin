@@ -25,9 +25,12 @@ public class SupabaseAuthGateway implements ISupabaseAuthGateway {
     private static final Logger logger = LoggerFactory.getLogger(SupabaseAuthGateway.class);
 
     private final RestClient restClient;
+    private final String supabaseUrl;
 
-    public SupabaseAuthGateway(RestClient supabaseRestClient) {
+    public SupabaseAuthGateway(RestClient supabaseRestClient,
+                              com.flystore.config.SupabaseProperties supabaseProperties) {
         this.restClient = supabaseRestClient;
+        this.supabaseUrl = supabaseProperties.getUrl();
     }
 
     @Override
@@ -127,6 +130,29 @@ public class SupabaseAuthGateway implements ISupabaseAuthGateway {
 
         } catch (HttpClientErrorException e) {
             logger.warn("Error al cerrar sesión (ignorado): {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public SupabaseSession obtenerUsuario(String accessToken) {
+        logger.debug("Obteniendo información del usuario desde Supabase");
+
+        try {
+            SupabaseSession sesion = restClient.get()
+                    .uri("/auth/v1/user")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .retrieve()
+                    .body(SupabaseSession.class);
+
+            logger.info("Usuario obtenido exitosamente");
+            return sesion;
+
+        } catch (HttpClientErrorException e) {
+            logger.error("Error 4xx al obtener usuario: {}", e.getMessage());
+            throw mapearErrorCliente(e);
+        } catch (HttpServerErrorException e) {
+            logger.error("Error 5xx de Supabase: {}", e.getMessage());
+            throw new NegocioException(TipoError.SUPABASE_NO_DISPONIBLE, "Servicio de autenticación no disponible");
         }
     }
 

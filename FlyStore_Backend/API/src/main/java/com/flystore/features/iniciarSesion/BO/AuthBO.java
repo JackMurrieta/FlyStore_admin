@@ -4,6 +4,7 @@ import CU_iniciarSesion_DTOs.AuthResponse;
 import CU_iniciarSesion_DTOs.LoginRequest;
 import CU_iniciarSesion_DTOs.RegisterRequest;
 import CU_iniciarSesion_DTOs.SupabaseSession;
+import com.flystore.config.SupabaseProperties;
 import com.flystore.entidades.Admin;
 import com.flystore.entidades.Cliente;
 import com.flystore.entidades.Empleado;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -39,15 +41,18 @@ public class AuthBO implements IAuthBO {
     private final IClienteDAO clienteDAO;
     private final IEmpleadoDAO empleadoDAO;
     private final IAdminDAO adminDAO;
+    private final SupabaseProperties supabaseProperties;
 
     public AuthBO(ISupabaseAuthGateway supabaseGateway,
                   IClienteDAO clienteDAO,
                   IEmpleadoDAO empleadoDAO,
-                  IAdminDAO adminDAO) {
+                  IAdminDAO adminDAO,
+                  SupabaseProperties supabaseProperties) {
         this.supabaseGateway = supabaseGateway;
         this.clienteDAO = clienteDAO;
         this.empleadoDAO = empleadoDAO;
         this.adminDAO = adminDAO;
+        this.supabaseProperties = supabaseProperties;
     }
 
     @Override
@@ -244,5 +249,103 @@ public class AuthBO implements IAuthBO {
         if (usuario instanceof Empleado) return "empleado";
         if (usuario instanceof Admin) return "admin";
         return "desconocido";
+    }
+
+    /**
+     * Crea un cliente desde los datos de Google
+     * Extrae nombre del user_metadata de Supabase
+     */
+    @Transactional
+    private Cliente crearClienteDesdeGoogle(UUID authId, String email, SupabaseSession sesion) {
+        Cliente cliente = new Cliente();
+        cliente.setAuthId(authId);
+        cliente.setEmail(email);
+
+        // Extraer nombre de user_metadata si existe
+        Map<String, Object> userMetadata = sesion.user().userMetadata();
+        if (userMetadata != null) {
+            String fullName = (String) userMetadata.get("full_name");
+            String firstName = (String) userMetadata.get("name");
+
+            if (fullName != null && !fullName.isEmpty()) {
+                String[] parts = fullName.split(" ", 2);
+                cliente.setNombre(parts[0]);
+                cliente.setApellidos(parts.length > 1 ? parts[1] : "");
+            } else if (firstName != null) {
+                cliente.setNombre(firstName);
+                cliente.setApellidos("");
+            } else {
+                // Usar email como nombre por defecto
+                cliente.setNombre(email.split("@")[0]);
+                cliente.setApellidos("");
+            }
+        } else {
+            cliente.setNombre(email.split("@")[0]);
+            cliente.setApellidos("");
+        }
+
+        cliente.setActivo(true);
+        cliente.setFechaRegistro(LocalDate.now());
+
+        Cliente guardado = clienteDAO.save(cliente);
+        logger.info("Cliente creado desde Google: {}", authId);
+
+        return guardado;
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse sincronizarUsuarioGoogle(String accessToken) {
+        logger.info("Sincronizando usuario de Google con BD local");
+
+        try {
+            // 1. Obtener información del usuario desde Supabase usando el access token
+            SupabaseSession sesion = supabaseGateway.obtenerUsuario(accessToken);
+
+            UUID authId = UUID.fromString(sesion.user().id());
+            String email = sesion.user().email();
+
+            // 2. Buscar usuario en BD local
+            Usuario usuario = buscarUsuarioPorAuthId(authId);
+
+            // 3. Si no existe, crear como cliente
+            if (usuario == null) {
+                logger.info("Usuario {} no existe en BD, creando como cliente", authId);
+                usuario = crearClienteDesdeGoogle(authId, email, sesion);
+            }
+
+            // 4. Construir respuesta
+            return new AuthResponse(
+                    accessToken,
+                    sesion.expiresIn() != null ? sesion.expiresIn().longValue() : 3600L,
+                    sesion.tokenType() != null ? sesion.tokenType() : "bearer",
+                    authId,
+                    email,
+                    usuario.getNombre(),
+                    usuario.getApellidos(),
+                    determinarTipoUsuario(usuario)
+            );
+
+        } catch (NegocioException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error inesperado al sincronizar usuario de Google", e);
+            throw new NegocioException(TipoError.ERROR_INTERNO, "Error al sincronizar usuario de Google");
+        }
+    }
+
+    @Override
+    public String getGoogleOAuthUrl(String callbackUrl) {
+        logger.debug("Generando URL de Google OAuth con callback: {}", callbackUrl);
+
+        // Construir URL de OAuth de Supabase
+        // Formato: https://tu-proyecto.supabase.co/auth/v1/authorize?provider=google&redirect_to=...
+        return UriComponentsBuilder
+                .fromHttpUrl(supabaseProperties.getUrl())
+                .path("/auth/v1/authorize")
+                .queryParam("provider", "google")
+                .queryParam("redirect_to", callbackUrl)
+                .build()
+                .toUriString();
     }
 }

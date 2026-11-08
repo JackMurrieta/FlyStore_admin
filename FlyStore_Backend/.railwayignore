@@ -1,0 +1,89 @@
+# ============================================================================
+# .railwayignore - Archivos excluidos del despliegue en Railway
+# ============================================================================
+# Similar a .dockerignore, pero específico para Railway
+# ============================================================================
+
+# Directorios de build
+target/
+**/target/
+build/
+**/build/
+
+# Archivos compilados
+*.class
+*.jar
+*.war
+*.ear
+
+# Archivos de configuración local (con credenciales)
+application.properties
+**/application.properties
+!**/application-prod.properties
+!**/application.properties.example
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*~
+
+# Archivos de sistema
+Thumbs.db
+.DS_Store
+
+# Node modules (si hubiera frontend en el repo)
+node_modules/
+
+# Documentación de desarrollo
+README.md
+CONFIGURACION.md
+*.example
+
+# Tests (no necesarios en producción)
+**/src/test/
+test/
+tests/
+
+# Archivos de Claude Code
+.claude/
+
+# StarUML (diagramas)
+StarUml/
+*.mdj
+
+# Base de datos local
+*.db
+*.sqlite
+*.h2.db
+
+# Secrets y env files (NUNCA subir a Railway)
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*.p12

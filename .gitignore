@@ -32,13 +32,21 @@ dist-ssr
 *.ear
 
 # Spring Boot - Archivos de configuración con credenciales sensibles
-*.properties
-!**/src/main/resources/application-template.properties
-application.yml
-application.yaml
-application-*.properties
-application-*.yml
-application-*.yaml
+# Ignorar application.properties pero PERMITIR application.properties.example y application-prod.properties
+**/application.properties
+!**/application.properties.example
+!**/application-prod.properties
+**/application.yml
+**/application.yaml
+# Ignorar otros perfiles excepto prod
+**/application-dev.properties
+**/application-local.properties
+**/application-test.properties
+**/application-*.yml
+**/application-*.yaml
+
+# Permitir archivos .properties que NO sean de configuración de Spring
+# Si necesitas otros archivos .properties, agrégalos aquí con !ruta/archivo.properties
 
 # Claude Code
 /.claude/
