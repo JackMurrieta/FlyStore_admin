@@ -4,6 +4,7 @@ import CU_iniciarSesion_DTOs.AuthResponse;
 import CU_iniciarSesion_DTOs.LoginRequest;
 import CU_iniciarSesion_DTOs.RegisterRequest;
 import CU_iniciarSesion_DTOs.UserInfoResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flystore.features.iniciarSesion.BO.IAuthBO;
 import com.flystore.util.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,7 +61,7 @@ public class AuthController {
         AuthResponse authResponse = authBO.login(request);
 
         // Setear tokens en cookies HttpOnly
-        cookieUtils.setAccessTokenCookie(response, authResponse.access_token(), authResponse.expires_in());
+        cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
         // Nota: Supabase NO devuelve refresh_token en login con password
         // Solo lo devuelve en signup o en refresh. Por seguridad, lo guardamos si existe
@@ -86,7 +87,7 @@ public class AuthController {
         AuthResponse authResponse = authBO.registrar(request);
 
         // Setear tokens en cookies HttpOnly
-        cookieUtils.setAccessTokenCookie(response, authResponse.access_token(), authResponse.expires_in());
+        cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
         // Devolver solo información del usuario (sin tokens)
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -110,7 +111,7 @@ public class AuthController {
         AuthResponse authResponse = authBO.refrescarToken(refreshToken);
 
         // Setear nuevo access token en cookie
-        cookieUtils.setAccessTokenCookie(response, authResponse.access_token(), authResponse.expires_in());
+        cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
         // 204 No Content (el token está en la cookie)
         return ResponseEntity.noContent().build();
@@ -254,10 +255,10 @@ public class AuthController {
 
         try {
             // Sincronizar usuario con BD local usando el token de Supabase
-            AuthResponse authResponse = authBO.sincronizarUsuarioGoogle(tokenRequest.access_token());
+            AuthResponse authResponse = authBO.sincronizarUsuarioGoogle(tokenRequest.accessToken());
 
             // Setear cookies HttpOnly
-            cookieUtils.setAccessTokenCookie(response, authResponse.access_token(), authResponse.expires_in());
+            cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
             // Devolver información del usuario
             return ResponseEntity.ok(UserInfoResponse.fromAuthResponse(authResponse));
@@ -350,10 +351,10 @@ public class AuthController {
 
         try {
             // El token ya está validado por Supabase, solo necesitamos obtener info del usuario
-            AuthResponse authResponse = authBO.sincronizarUsuarioGoogle(tokenRequest.access_token());
+            AuthResponse authResponse = authBO.sincronizarUsuarioGoogle(tokenRequest.accessToken());
 
             // Setear cookies HttpOnly
-            cookieUtils.setAccessTokenCookie(response, authResponse.access_token(), authResponse.expires_in());
+            cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
             // Devolver información del usuario
             return ResponseEntity.ok(UserInfoResponse.fromAuthResponse(authResponse));
@@ -367,5 +368,8 @@ public class AuthController {
     /**
      * DTO interno para recibir el access_token desde JavaScript
      */
-    private record GoogleTokenRequest(String access_token) {}
+    private record GoogleTokenRequest(
+            @JsonProperty("access_token")
+            String accessToken
+    ) {}
 }

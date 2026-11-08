@@ -29,11 +29,11 @@ public record UserInfoResponse(
      */
     public static UserInfoResponse fromAuthResponse(AuthResponse authResponse) {
         return new UserInfoResponse(
-                authResponse.user_id(),
+                authResponse.userId(),
                 authResponse.email(),
                 authResponse.nombre(),
                 authResponse.apellidos(),
-                authResponse.tipo_usuario()
+                authResponse.tipoUsuario()
         );
     }
 }
