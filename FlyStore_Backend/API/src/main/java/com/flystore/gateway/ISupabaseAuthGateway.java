@@ -1,6 +1,7 @@
 package com.flystore.gateway;
 
 import CU_iniciarSesion_DTOs.SupabaseSession;
+import CU_iniciarSesion_DTOs.SupabaseUser;
 
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public interface ISupabaseAuthGateway {
     /**
      * Obtiene información del usuario usando un access token
      * @param accessToken Access token del usuario
-     * @return Sesión de Supabase con información del usuario
+     * @return Usuario de Supabase con información del usuario
      */
-    SupabaseSession obtenerUsuario(String accessToken);
+    SupabaseUser obtenerUsuario(String accessToken);
 }

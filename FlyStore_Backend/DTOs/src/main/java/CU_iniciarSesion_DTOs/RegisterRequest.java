@@ -6,7 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO record para solicitud de registro
+ * DTO record para solicitud de registro de cliente
+ * El frontend solo debe conocer tipos de cliente, no tipos de usuario internos
  */
 public record RegisterRequest(
         @JsonProperty("nombre")
@@ -30,8 +31,16 @@ public record RegisterRequest(
         @JsonProperty("telefono")
         String telefono,
 
-        @JsonProperty("tipo_usuario")
-        @NotBlank(message = "El tipo de usuario es requerido")
-        String tipoUsuario
+        @JsonProperty("tipo_cliente")
+        String tipoCliente
 ) {
+    /**
+     * Constructor con valor por defecto para tipo_cliente
+     */
+    public RegisterRequest {
+        // Si no se especifica tipo_cliente, usar BASE por defecto
+        if (tipoCliente == null || tipoCliente.isBlank()) {
+            tipoCliente = "BASE";
+        }
+    }
 }

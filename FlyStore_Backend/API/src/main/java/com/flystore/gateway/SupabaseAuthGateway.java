@@ -1,6 +1,7 @@
 package com.flystore.gateway;
 
 import CU_iniciarSesion_DTOs.SupabaseSession;
+import CU_iniciarSesion_DTOs.SupabaseUser;
 import com.flystore.excepcion.NegocioException;
 import com.flystore.excepcion.TipoError;
 import org.slf4j.Logger;
@@ -134,18 +135,18 @@ public class SupabaseAuthGateway implements ISupabaseAuthGateway {
     }
 
     @Override
-    public SupabaseSession obtenerUsuario(String accessToken) {
+    public SupabaseUser obtenerUsuario(String accessToken) {
         logger.debug("Obteniendo información del usuario desde Supabase");
 
         try {
-            SupabaseSession sesion = restClient.get()
+            SupabaseUser usuario = restClient.get()
                     .uri("/auth/v1/user")
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
-                    .body(SupabaseSession.class);
+                    .body(SupabaseUser.class);
 
             logger.info("Usuario obtenido exitosamente");
-            return sesion;
+            return usuario;
 
         } catch (HttpClientErrorException e) {
             logger.error("Error 4xx al obtener usuario: {}", e.getMessage());

@@ -4,27 +4,32 @@ import CU_iniciarSesion_DTOs.AuthResponse;
 import CU_iniciarSesion_DTOs.LoginRequest;
 import CU_iniciarSesion_DTOs.RegisterRequest;
 import CU_iniciarSesion_DTOs.SupabaseSession;
+import CU_iniciarSesion_DTOs.SupabaseUser;
 import com.flystore.config.SupabaseProperties;
 import com.flystore.entidades.Admin;
 import com.flystore.entidades.Cliente;
 import com.flystore.entidades.Empleado;
+import com.flystore.entidades.TipoCliente;
 import com.flystore.entidades.Usuario;
 import com.flystore.excepcion.NegocioException;
 import com.flystore.excepcion.TipoError;
 import com.flystore.features.iniciarSesion.DAO.IAdminDAO;
 import com.flystore.features.iniciarSesion.DAO.IClienteDAO;
 import com.flystore.features.iniciarSesion.DAO.IEmpleadoDAO;
+import com.flystore.features.iniciarSesion.DAO.ITipoClienteDAO;
 import com.flystore.gateway.ISupabaseAuthGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Business Object para autenticación
@@ -42,60 +47,70 @@ public class AuthBO implements IAuthBO {
     private final IEmpleadoDAO empleadoDAO;
     private final IAdminDAO adminDAO;
     private final SupabaseProperties supabaseProperties;
+    private final ITipoClienteDAO tipoClienteDAO;
 
     public AuthBO(ISupabaseAuthGateway supabaseGateway,
                   IClienteDAO clienteDAO,
                   IEmpleadoDAO empleadoDAO,
                   IAdminDAO adminDAO,
-                  SupabaseProperties supabaseProperties) {
+                  SupabaseProperties supabaseProperties,
+                  ITipoClienteDAO tipoClienteDAO) {
         this.supabaseGateway = supabaseGateway;
         this.clienteDAO = clienteDAO;
         this.empleadoDAO = empleadoDAO;
         this.adminDAO = adminDAO;
         this.supabaseProperties = supabaseProperties;
+        this.tipoClienteDAO = tipoClienteDAO;
     }
 
     @Override
     @Transactional
     public AuthResponse registrar(RegisterRequest request) {
-        logger.info("Registrando usuario: {}", request.email());
+        logger.info("Registrando cliente: {} - Tipo: {}", request.email(), request.tipoCliente());
 
         try {
-            // 1. Crear metadata para Supabase
+            // 1. Crear metadata para Supabase (información del usuario)
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("nombre", request.nombre());
             metadata.put("apellidos", request.apellidos());
-            metadata.put("tipo_usuario", request.tipoUsuario());
+            metadata.put("tipo_cliente", request.tipoCliente());
+            metadata.put("telefono", request.telefono() != null ? request.telefono() : "");
 
-            // 2. Registrar en Supabase Auth
+            // 2. Registrar usuario en Supabase Auth
             SupabaseSession sesion = supabaseGateway.registrar(
                     request.email(),
                     request.password(),
                     metadata
             );
 
+            // 3. Verificar si requiere confirmación de email
+            // Si no hay access_token, significa que se envió email de verificación
+            if (sesion.accessToken() == null || sesion.accessToken().isBlank()) {
+                logger.info("Registro exitoso - Email de verificación enviado a: {}", request.email());
+                return null; // El controller manejará este caso
+            }
+
+            // 4. Si hay access_token, crear cliente inmediatamente (email verification deshabilitada)
             UUID authId = UUID.fromString(sesion.user().id());
+            Cliente cliente = crearClienteEntidad(authId, request);
 
-            // 3. Crear usuario en BD local
-            Usuario usuario = crearUsuarioLocal(authId, request);
-
-            // 4. Construir respuesta
+            // 5. Construir respuesta
             return new AuthResponse(
                     sesion.accessToken(),
                     sesion.expiresIn().longValue(),
                     sesion.tokenType(),
                     authId,
                     sesion.user().email(),
-                    usuario.getNombre(),
-                    usuario.getApellidos(),
-                    request.tipoUsuario()
+                    cliente.getNombre(),
+                    cliente.getApellidos(),
+                    "cliente"
             );
 
         } catch (NegocioException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Error inesperado al registrar usuario", e);
-            throw new NegocioException(TipoError.ERROR_INTERNO, "Error al registrar usuario");
+            logger.error("Error inesperado al registrar cliente", e);
+            throw new NegocioException(TipoError.ERROR_INTERNO, "Error al registrar cliente");
         }
     }
 
@@ -174,59 +189,46 @@ public class AuthBO implements IAuthBO {
     }
 
     /**
-     * Crea el usuario en la base de datos local según su tipo
-     * GRASP: Creator - AuthBO crea las entidades de usuario
+     * Crea el cliente en la base de datos local
+     * GRASP: Creator - AuthBO crea la entidad Cliente
+     *
+     * Nota: El registro público (/api/auth/registro) SIEMPRE crea Clientes.
+     * Para crear Empleados/Admins se usarán endpoints protegidos específicos.
+     *
+     * @param authId UUID del usuario en Supabase Auth (FK)
+     * @param request Datos del registro
+     * @return Cliente creado
      */
     @Transactional
-    private Usuario crearUsuarioLocal(UUID authId, RegisterRequest request) {
-        Usuario usuario;
-
-        switch (request.tipoUsuario().toLowerCase()) {
-            case "cliente":
-                Cliente cliente = new Cliente();
-                cliente.setAuthId(authId);
-                cliente.setNombre(request.nombre());
-                cliente.setApellidos(request.apellidos());
-                cliente.setEmail(request.email());
-                cliente.setTelefono(request.telefono());
-                cliente.setActivo(true);
-                cliente.setFechaRegistro(LocalDate.now());
-                usuario = clienteDAO.save(cliente);
-                break;
-
-            case "empleado":
-                Empleado empleado = new Empleado();
-                empleado.setAuthId(authId);
-                empleado.setNombre(request.nombre());
-                empleado.setApellidos(request.apellidos());
-                empleado.setEmail(request.email());
-                empleado.setTelefono(request.telefono());
-                empleado.setActivo(true);
-                empleado.setFechaRegistro(LocalDate.now());
-                usuario = empleadoDAO.save(empleado);
-                break;
-
-            case "admin":
-                Admin admin = new Admin();
-                admin.setAuthId(authId);
-                admin.setNombre(request.nombre());
-                admin.setApellidos(request.apellidos());
-                admin.setEmail(request.email());
-                admin.setTelefono(request.telefono());
-                admin.setActivo(true);
-                admin.setFechaRegistro(LocalDate.now());
-                usuario = adminDAO.save(admin);
-                break;
-
-            default:
-                throw new NegocioException(
-                        TipoError.DATOS_INVALIDOS,
-                        "Tipo de usuario no válido: " + request.tipoUsuario()
-                );
+    private Cliente crearClienteEntidad(UUID authId, RegisterRequest request) {
+        // Validar que el tipo_cliente sea válido
+        TipoCliente tipoCliente;
+        try {
+            tipoCliente = TipoCliente.valueOf(request.tipoCliente().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.error("Tipo de cliente no válido: {}", request.tipoCliente());
+            throw new NegocioException(
+                    TipoError.DATOS_INVALIDOS,
+                    "Tipo de cliente no válido: " + request.tipoCliente()
+            );
         }
 
-        logger.info("Usuario creado en BD local: {}", authId);
-        return usuario;
+        // Crear cliente en BD local con auth_id como FK al usuario de Supabase
+        Cliente cliente = new Cliente();
+        cliente.setAuthId(authId); // FK al UUID de Supabase Auth
+        cliente.setNombre(request.nombre());
+        cliente.setApellidos(request.apellidos());
+        cliente.setEmail(request.email());
+        cliente.setTelefono(request.telefono());
+        cliente.setTipoCliente(tipoCliente);
+        cliente.setActivo(true);
+        cliente.setFechaRegistro(LocalDate.now());
+
+        Cliente clienteGuardado = clienteDAO.save(cliente);
+        logger.info("Cliente creado en BD local - ID: {}, Auth ID: {}, Tipo: {}",
+                clienteGuardado.getId(), authId, tipoCliente);
+
+        return clienteGuardado;
     }
 
     /**
@@ -251,76 +253,116 @@ public class AuthBO implements IAuthBO {
         return "desconocido";
     }
 
-    /**
-     * Crea un cliente desde los datos de Google
-     * Extrae nombre del user_metadata de Supabase
-     */
-    @Transactional
-    private Cliente crearClienteDesdeGoogle(UUID authId, String email, SupabaseSession sesion) {
-        Cliente cliente = new Cliente();
-        cliente.setAuthId(authId);
-        cliente.setEmail(email);
 
-        // Extraer nombre de user_metadata si existe
-        Map<String, Object> userMetadata = sesion.user().userMetadata();
-        if (userMetadata != null) {
-            String fullName = (String) userMetadata.get("full_name");
-            String firstName = (String) userMetadata.get("name");
+    @Override
+    public List<String> obtenerTiposCliente() {
+        logger.debug("Obteniendo tipos de cliente disponibles");
 
-            if (fullName != null && !fullName.isEmpty()) {
-                String[] parts = fullName.split(" ", 2);
-                cliente.setNombre(parts[0]);
-                cliente.setApellidos(parts.length > 1 ? parts[1] : "");
-            } else if (firstName != null) {
-                cliente.setNombre(firstName);
-                cliente.setApellidos("");
-            } else {
-                // Usar email como nombre por defecto
-                cliente.setNombre(email.split("@")[0]);
-                cliente.setApellidos("");
-            }
-        } else {
-            cliente.setNombre(email.split("@")[0]);
-            cliente.setApellidos("");
-        }
+        // Obtener tipos de cliente desde DAO
+        List<TipoCliente> tiposCliente = tipoClienteDAO.obtenerTodos();
 
-        cliente.setActivo(true);
-        cliente.setFechaRegistro(LocalDate.now());
-
-        Cliente guardado = clienteDAO.save(cliente);
-        logger.info("Cliente creado desde Google: {}", authId);
-
-        return guardado;
+        // Convertir enum a String
+        return tiposCliente.stream()
+                .map(Enum::name)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public AuthResponse sincronizarUsuarioGoogle(String accessToken) {
-        logger.info("Sincronizando usuario de Google con BD local");
+    public AuthResponse procesarCallbackVerificacion(String accessToken, String refreshToken) {
+        logger.info("Procesando callback de verificación de email");
 
         try {
-            // 1. Obtener información del usuario desde Supabase usando el access token
-            SupabaseSession sesion = supabaseGateway.obtenerUsuario(accessToken);
+            // 1. Obtener información del usuario desde Supabase
+            SupabaseUser usuario = supabaseGateway.obtenerUsuario(accessToken);
+            UUID authId = UUID.fromString(usuario.id());
 
-            UUID authId = UUID.fromString(sesion.user().id());
-            String email = sesion.user().email();
+            // 2. Verificar si el cliente ya existe en BD local
+            Optional<Cliente> clienteExistente = clienteDAO.findByAuthId(authId);
+
+            Cliente cliente;
+            if (clienteExistente.isPresent()) {
+                // Cliente ya existe (puede ser una re-verificación)
+                logger.info("Cliente ya existe en BD: {}", authId);
+                cliente = clienteExistente.get();
+            } else {
+                // 3. Crear cliente desde metadata guardado en Supabase
+                logger.info("Creando cliente en BD desde metadata de Supabase: {}", authId);
+
+                Map<String, Object> metadata = usuario.userMetadata();
+                String nombre = (String) metadata.get("nombre");
+                String apellidos = (String) metadata.get("apellidos");
+                String tipoClienteStr = (String) metadata.get("tipo_cliente");
+                String telefono = (String) metadata.get("telefono");
+
+                // Validar metadata
+                if (nombre == null || apellidos == null || tipoClienteStr == null) {
+                    throw new NegocioException(
+                            TipoError.DATOS_INVALIDOS,
+                            "Metadata de usuario incompleta en Supabase"
+                    );
+                }
+
+                // Crear RegisterRequest desde metadata
+                RegisterRequest request = new RegisterRequest(
+                        nombre,
+                        apellidos,
+                        usuario.email(),
+                        "", // password no es necesario aquí
+                        telefono,
+                        tipoClienteStr
+                );
+
+                cliente = crearClienteEntidad(authId, request);
+            }
+
+            // 4. Construir respuesta con tokens
+            return new AuthResponse(
+                    accessToken,
+                    3600L, // Supabase default: 1 hora
+                    "Bearer",
+                    authId,
+                    usuario.email(),
+                    cliente.getNombre(),
+                    cliente.getApellidos(),
+                    "cliente"
+            );
+
+        } catch (NegocioException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error al procesar callback de verificación", e);
+            throw new NegocioException(TipoError.ERROR_INTERNO, "Error al procesar verificación de email");
+        }
+    }
+
+    @Override
+    public AuthResponse obtenerUsuarioActual(String accessToken) {
+        logger.info("Obteniendo información del usuario actual");
+
+        try {
+            // 1. Validar token con Supabase y obtener información del usuario
+            SupabaseUser usuarioSupabase = supabaseGateway.obtenerUsuario(accessToken);
+            UUID authId = UUID.fromString(usuarioSupabase.id());
 
             // 2. Buscar usuario en BD local
             Usuario usuario = buscarUsuarioPorAuthId(authId);
 
-            // 3. Si no existe, crear como cliente
             if (usuario == null) {
-                logger.info("Usuario {} no existe en BD, creando como cliente", authId);
-                usuario = crearClienteDesdeGoogle(authId, email, sesion);
+                logger.warn("Usuario {} no encontrado en BD local", authId);
+                throw new NegocioException(
+                        TipoError.USUARIO_NO_ENCONTRADO,
+                        "Usuario no registrado en el sistema"
+                );
             }
 
-            // 4. Construir respuesta
+            // 3. Construir respuesta
             return new AuthResponse(
                     accessToken,
-                    sesion.expiresIn() != null ? sesion.expiresIn().longValue() : 3600L,
-                    sesion.tokenType() != null ? sesion.tokenType() : "bearer",
+                    3600L, // Tiempo por defecto
+                    "Bearer",
                     authId,
-                    email,
+                    usuarioSupabase.email(),
                     usuario.getNombre(),
                     usuario.getApellidos(),
                     determinarTipoUsuario(usuario)
@@ -329,23 +371,9 @@ public class AuthBO implements IAuthBO {
         } catch (NegocioException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Error inesperado al sincronizar usuario de Google", e);
-            throw new NegocioException(TipoError.ERROR_INTERNO, "Error al sincronizar usuario de Google");
+            logger.error("Error al obtener usuario actual", e);
+            throw new NegocioException(TipoError.TOKEN_INVALIDO, "Token de sesión inválido o expirado");
         }
     }
 
-    @Override
-    public String getGoogleOAuthUrl(String callbackUrl) {
-        logger.debug("Generando URL de Google OAuth con callback: {}", callbackUrl);
-
-        // Construir URL de OAuth de Supabase
-        // Formato: https://tu-proyecto.supabase.co/auth/v1/authorize?provider=google&redirect_to=...
-        return UriComponentsBuilder
-                .fromHttpUrl(supabaseProperties.getUrl())
-                .path("/auth/v1/authorize")
-                .queryParam("provider", "google")
-                .queryParam("redirect_to", callbackUrl)
-                .build()
-                .toUriString();
-    }
 }

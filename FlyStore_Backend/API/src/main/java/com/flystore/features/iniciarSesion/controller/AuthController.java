@@ -3,8 +3,9 @@ package com.flystore.features.iniciarSesion.controller;
 import CU_iniciarSesion_DTOs.AuthResponse;
 import CU_iniciarSesion_DTOs.LoginRequest;
 import CU_iniciarSesion_DTOs.RegisterRequest;
+import CU_iniciarSesion_DTOs.RegistroPendienteResponse;
+import CU_iniciarSesion_DTOs.TipoClienteResponse;
 import CU_iniciarSesion_DTOs.UserInfoResponse;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flystore.features.iniciarSesion.BO.IAuthBO;
 import com.flystore.util.CookieUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,13 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Controller para caso de uso: Iniciar Sesión
- * SOLID: SRP - Solo maneja HTTP (entrada/salida, códigos de respuesta)
- * GRASP: Controller - Coordina el caso de uso de autenticación
- * SOLID: DIP - Depende de IAuthBO (abstracción), no de implementación
+ * Controller para caso de uso: Iniciar Sesión SOLID: SRP - Solo maneja HTTP (entrada/salida, códigos de respuesta) GRASP: Controller - Coordina el caso de uso de autenticación SOLID: DIP - Depende de IAuthBO (abstracción), no de implementación
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -34,10 +33,7 @@ public class AuthController {
     private final IAuthBO authBO;
     private final CookieUtils cookieUtils;
 
-    @Value("${app.backend-url:http://localhost:8080}")
-    private String backendUrl;
-
-    @Value("${app.frontend-url:http://localhost:5173}")
+    @Value("${app.frontend-url}")
     private String frontendUrl;
 
     // SOLID: Inyección por CONSTRUCTOR (no @Autowired en campos)
@@ -47,9 +43,7 @@ public class AuthController {
     }
 
     /**
-     * POST /api/auth/login
-     * Inicia sesión de usuario
-     * El access_token y refresh_token se devuelven en cookies HttpOnly
+     * POST /api/auth/login Inicia sesión de usuario El access_token y refresh_token se devuelven en cookies HttpOnly
      */
     @PostMapping("/login")
     public ResponseEntity<UserInfoResponse> login(
@@ -66,7 +60,6 @@ public class AuthController {
         // Nota: Supabase NO devuelve refresh_token en login con password
         // Solo lo devuelve en signup o en refresh. Por seguridad, lo guardamos si existe
         // En tu caso, como usas Supabase, el refresh está manejado internamente
-
         // Devolver solo información del usuario (sin tokens)
         return ResponseEntity.ok(UserInfoResponse.fromAuthResponse(authResponse));
     }
@@ -74,11 +67,11 @@ public class AuthController {
     /**
      * POST /api/auth/registro
      * Registra un nuevo usuario
-     * Si Supabase requiere confirmación de email, NO se devuelve sesión
-     * Si NO requiere confirmación, se setean cookies HttpOnly automáticamente
+     * - Si Supabase requiere confirmación de email: Devuelve 200 con mensaje de verificación pendiente
+     * - Si NO requiere confirmación: Devuelve 201 con sesión establecida (cookies HttpOnly)
      */
     @PostMapping("/registro")
-    public ResponseEntity<UserInfoResponse> registro(
+    public ResponseEntity<?> registro(
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response) {
 
@@ -86,19 +79,21 @@ public class AuthController {
 
         AuthResponse authResponse = authBO.registrar(request);
 
-        // Setear tokens en cookies HttpOnly
+        // Si authResponse es null, significa que se envió email de verificación
+        if (authResponse == null) {
+            logger.info("Registro requiere verificación de email: {}", request.email());
+            return ResponseEntity.ok(RegistroPendienteResponse.crear(request.email()));
+        }
+
+        // Si hay authResponse, setear cookies y devolver sesión
         cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
-        // Devolver solo información del usuario (sin tokens)
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(UserInfoResponse.fromAuthResponse(authResponse));
     }
 
     /**
-     * POST /api/auth/refresh
-     * Refresca el access token usando el refresh token de la cookie
-     * Nota: Actualmente Supabase no implementa refresh en login con password
-     * Este endpoint está preparado para cuando se agregue esa funcionalidad
+     * POST /api/auth/refresh Refresca el access token usando el refresh token de la cookie Nota: Actualmente Supabase no implementa refresh en login con password Este endpoint está preparado para cuando se agregue esa funcionalidad
      */
     @PostMapping("/refresh")
     public ResponseEntity<Void> refresh(HttpServletRequest request, HttpServletResponse response) {
@@ -118,8 +113,7 @@ public class AuthController {
     }
 
     /**
-     * POST /api/auth/logout
-     * Cierra la sesión del usuario y borra las cookies
+     * POST /api/auth/logout Cierra la sesión del usuario y borra las cookies
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
@@ -142,234 +136,94 @@ public class AuthController {
     }
 
     /**
-     * GET /api/auth/google/initiate
-     * Inicia el flujo de OAuth con Google
-     * Redirige al usuario a la página de autorización de Google vía Supabase
-     */
-    @GetMapping("/google/initiate")
-    public void initiateGoogleOAuth(HttpServletResponse response) throws IOException {
-        logger.info("GET /api/auth/google/initiate - Iniciando flujo OAuth con Google");
-
-        // Construir URL de OAuth de Supabase con redirect apuntando al backend
-        String callbackUrl = backendUrl + "/api/auth/google/callback";
-        String supabaseOAuthUrl = authBO.getGoogleOAuthUrl(callbackUrl);
-
-        // Redirigir al usuario a Supabase OAuth
-        response.sendRedirect(supabaseOAuthUrl);
-    }
-
-    /**
-     * GET /api/auth/google/callback
-     * Callback de Google OAuth manejado por el BACKEND
-     * Supabase redirige aquí después de la autenticación con Google
+     * GET /api/auth/yo
+     * Obtiene información del usuario autenticado actual
+     * Lee el access_token de la cookie HttpOnly y valida la sesión
      *
-     * Flujo:
-     * 1. Usuario autoriza en Google
-     * 2. Google → Supabase → Backend (este endpoint)
-     * 3. Backend extrae access_token del hash
-     * 4. Backend sincroniza usuario con BD local
-     * 5. Backend setea cookies HttpOnly
-     * 6. Backend redirige a frontend (sin token en URL)
+     * Útil para que el frontend:
+     * - Verifique si hay sesión activa al cargar la app
+     * - Obtenga datos del usuario sin hacer login nuevamente
+     * - Valide que la sesión sigue siendo válida
+     *
+     * @param request HTTP request que contiene la cookie con el access_token
+     * @return Información del usuario autenticado
      */
-    @GetMapping("/google/callback")
-    public void handleGoogleCallback(
-            HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
+    @GetMapping("/yo")
+    public ResponseEntity<UserInfoResponse> obtenerUsuarioActual(HttpServletRequest request) {
+        logger.info("GET /api/auth/yo - Obteniendo usuario actual");
 
-        logger.info("GET /api/auth/google/callback - Recibiendo callback de Google OAuth");
+        // Obtener access token de la cookie HttpOnly
+        String accessToken = cookieUtils.getAccessTokenFromCookies(request)
+                .orElseThrow(() -> new RuntimeException("No se encontró sesión activa"));
 
-        try {
-            // Supabase devuelve el token en el HASH (#access_token=...)
-            // Pero el backend no puede leer el hash (solo lo ve el navegador)
-            // Por eso necesitamos un paso intermedio con JavaScript
+        // Validar token y obtener información del usuario
+        AuthResponse authResponse = authBO.obtenerUsuarioActual(accessToken);
 
-            // Servir una página HTML que extraiga el token del hash y lo envíe al backend
-            String html = """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Autenticando con Google...</title>
-                </head>
-                <body>
-                    <p>Autenticando con Google...</p>
-                    <script>
-                        // Extraer access_token del hash
-                        const hash = window.location.hash.substring(1);
-                        const params = new URLSearchParams(hash);
-                        const accessToken = params.get('access_token');
-
-                        if (accessToken) {
-                            // Enviar token al backend para sincronización
-                            fetch('%s/api/auth/google/complete', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({ access_token: accessToken }),
-                                credentials: 'include'  // Incluir cookies
-                            })
-                            .then(response => {
-                                if (response.ok) {
-                                    // Redirigir al frontend (ya tiene las cookies)
-                                    window.location.href = '%s';
-                                } else {
-                                    alert('Error al autenticar con Google');
-                                    window.location.href = '%s/login?error=google_auth_failed';
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Error al autenticar con Google');
-                                window.location.href = '%s/login?error=google_auth_failed';
-                            });
-                        } else {
-                            alert('No se recibió token de autenticación');
-                            window.location.href = '%s/login?error=no_token';
-                        }
-                    </script>
-                </body>
-                </html>
-                """.formatted(backendUrl, frontendUrl, frontendUrl, frontendUrl, frontendUrl);
-
-            response.setContentType("text/html; charset=UTF-8");
-            response.getWriter().write(html);
-
-        } catch (Exception e) {
-            logger.error("Error en callback de Google OAuth", e);
-            response.sendRedirect(frontendUrl + "/login?error=google_auth_failed");
-        }
+        // Devolver solo información del usuario (sin tokens)
+        return ResponseEntity.ok(UserInfoResponse.fromAuthResponse(authResponse));
     }
 
     /**
-     * POST /api/auth/google/complete
-     * Completa el flujo de Google OAuth
-     * Recibe el access_token extraído del hash por JavaScript
-     * y setea las cookies HttpOnly
+     * GET /api/auth/tipos-cliente Obtiene los tipos de cliente disponibles Endpoint público para que el frontend pueda mostrar opciones en el formulario de registro
      */
-    @PostMapping("/google/complete")
-    public ResponseEntity<UserInfoResponse> completeGoogleAuth(
-            @RequestBody GoogleTokenRequest tokenRequest,
-            HttpServletResponse response) {
+    @GetMapping("/tipos-cliente")
+    public ResponseEntity<List<TipoClienteResponse>> obtenerTiposCliente() {
+        logger.info("GET /api/auth/tipos-cliente - Obteniendo tipos de cliente");
 
-        logger.info("POST /api/auth/google/complete - Completando autenticación con Google");
+        List<String> tiposCliente = authBO.obtenerTiposCliente();
+
+        List<TipoClienteResponse> response = tiposCliente.stream()
+                .map(TipoClienteResponse::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/auth/callback
+     * Endpoint de callback para verificación de email desde Supabase
+     * Recibe tokens del callback, crea el cliente en PostgreSQL, establece cookies y redirige al frontend
+     */
+    @GetMapping("/callback")
+    public void callback(
+            @RequestParam(value = "access_token", required = false) String accessToken,
+            @RequestParam(value = "refresh_token", required = false) String refreshToken,
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "error_description", required = false) String errorDescription,
+            HttpServletResponse response) throws Exception {
+
+        logger.info("GET /api/auth/callback - Procesando callback de verificación de email");
+
+        // Verificar si hay error en el callback
+        if (error != null) {
+            logger.error("Error en callback de Supabase: {} - {}", error, errorDescription);
+            response.sendRedirect(frontendUrl + "?error=" + error);
+            return;
+        }
+
+        // Verificar que vengan los tokens
+        if (accessToken == null || accessToken.isBlank()) {
+            logger.error("Callback sin access_token");
+            response.sendRedirect(frontendUrl + "?error=missing_token");
+            return;
+        }
 
         try {
-            // Sincronizar usuario con BD local usando el token de Supabase
-            AuthResponse authResponse = authBO.sincronizarUsuarioGoogle(tokenRequest.accessToken());
+            // Procesar callback y crear cliente en PostgreSQL
+            AuthResponse authResponse = authBO.procesarCallbackVerificacion(accessToken, refreshToken);
 
-            // Setear cookies HttpOnly
+            // Establecer cookie HttpOnly con access_token
             cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
 
-            // Devolver información del usuario
-            return ResponseEntity.ok(UserInfoResponse.fromAuthResponse(authResponse));
+            logger.info("Callback procesado exitosamente - Redirigiendo a frontend: {}", frontendUrl);
+
+            // Redirigir al frontend con sesión establecida
+            response.sendRedirect(frontendUrl);
 
         } catch (Exception e) {
-            logger.error("Error al completar autenticación con Google", e);
-            throw e;
+            logger.error("Error al procesar callback: {}", e.getMessage());
+            response.sendRedirect(frontendUrl + "?error=callback_failed");
         }
     }
 
-    /**
-     * GET /api/auth/email/callback
-     * Callback de confirmación de email
-     * Supabase redirige aquí después de que el usuario confirma su email
-     *
-     * Flujo similar a Google OAuth:
-     * 1. Usuario hace clic en link de confirmación
-     * 2. Supabase valida y redirige aquí con token en hash
-     * 3. Backend extrae token, setea cookies y redirige a frontend
-     */
-    @GetMapping("/email/callback")
-    public void handleEmailConfirmationCallback(
-            HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
-
-        logger.info("GET /api/auth/email/callback - Recibiendo callback de confirmación de email");
-
-        try {
-            // Similar a Google callback, necesitamos JavaScript para extraer el token del hash
-            String html = """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Confirmando email...</title>
-                </head>
-                <body>
-                    <p>Confirmando tu email...</p>
-                    <script>
-                        const hash = window.location.hash.substring(1);
-                        const params = new URLSearchParams(hash);
-                        const accessToken = params.get('access_token');
-
-                        if (accessToken) {
-                            fetch('%s/api/auth/email/complete', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({ access_token: accessToken }),
-                                credentials: 'include'
-                            })
-                            .then(response => {
-                                if (response.ok) {
-                                    window.location.href = '%s?email_confirmed=true';
-                                } else {
-                                    window.location.href = '%s/login?error=email_confirmation_failed';
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                window.location.href = '%s/login?error=email_confirmation_failed';
-                            });
-                        } else {
-                            window.location.href = '%s/login?error=no_token';
-                        }
-                    </script>
-                </body>
-                </html>
-                """.formatted(backendUrl, frontendUrl, frontendUrl, frontendUrl, frontendUrl);
-
-            response.setContentType("text/html; charset=UTF-8");
-            response.getWriter().write(html);
-
-        } catch (Exception e) {
-            logger.error("Error en callback de confirmación de email", e);
-            response.sendRedirect(frontendUrl + "/login?error=email_confirmation_failed");
-        }
-    }
-
-    /**
-     * POST /api/auth/email/complete
-     * Completa el flujo de confirmación de email
-     */
-    @PostMapping("/email/complete")
-    public ResponseEntity<UserInfoResponse> completeEmailConfirmation(
-            @RequestBody GoogleTokenRequest tokenRequest,
-            HttpServletResponse response) {
-
-        logger.info("POST /api/auth/email/complete - Completando confirmación de email");
-
-        try {
-            // El token ya está validado por Supabase, solo necesitamos obtener info del usuario
-            AuthResponse authResponse = authBO.sincronizarUsuarioGoogle(tokenRequest.accessToken());
-
-            // Setear cookies HttpOnly
-            cookieUtils.setAccessTokenCookie(response, authResponse.accessToken(), authResponse.expiresIn());
-
-            // Devolver información del usuario
-            return ResponseEntity.ok(UserInfoResponse.fromAuthResponse(authResponse));
-
-        } catch (Exception e) {
-            logger.error("Error al completar confirmación de email", e);
-            throw e;
-        }
-    }
-
-    /**
-     * DTO interno para recibir el access_token desde JavaScript
-     */
-    private record GoogleTokenRequest(
-            @JsonProperty("access_token")
-            String accessToken
-    ) {}
 }

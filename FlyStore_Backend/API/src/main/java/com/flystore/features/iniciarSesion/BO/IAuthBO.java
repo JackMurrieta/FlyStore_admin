@@ -4,6 +4,8 @@ import CU_iniciarSesion_DTOs.AuthResponse;
 import CU_iniciarSesion_DTOs.LoginRequest;
 import CU_iniciarSesion_DTOs.RegisterRequest;
 
+import java.util.List;
+
 /**
  * Interfaz para Business Object de Autenticación
  * SOLID: ISP - Interfaz específica para autenticación
@@ -39,17 +41,28 @@ public interface IAuthBO {
      */
     void cerrarSesion(String accessToken);
 
-    /**
-     * Sincroniza el usuario de Google con la base de datos local
-     * @param accessToken Access token del usuario de Supabase
-     * @return Respuesta con datos del usuario
-     */
-    AuthResponse sincronizarUsuarioGoogle(String accessToken);
+
 
     /**
-     * Genera la URL de OAuth de Google a través de Supabase
-     * @param callbackUrl URL a la que Supabase debe redirigir después de la autenticación
-     * @return URL completa para iniciar el flujo de OAuth
+     * Obtiene todos los tipos de cliente disponibles
+     * @return Lista de tipos de cliente en formato String
      */
-    String getGoogleOAuthUrl(String callbackUrl);
+    List<String> obtenerTiposCliente();
+
+    /**
+     * Procesa el callback de verificación de email desde Supabase
+     * Crea el cliente en PostgreSQL después de verificar el email
+     * @param accessToken Token de acceso recibido en el callback
+     * @param refreshToken Token de refresco recibido en el callback
+     * @return Respuesta con tokens y datos del usuario
+     */
+    AuthResponse procesarCallbackVerificacion(String accessToken, String refreshToken);
+
+    /**
+     * Obtiene información del usuario actual usando el access token
+     * Útil para validar sesión activa desde el frontend
+     * @param accessToken Token de acceso del usuario
+     * @return Respuesta con datos del usuario actual
+     */
+    AuthResponse obtenerUsuarioActual(String accessToken);
 }
