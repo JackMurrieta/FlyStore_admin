@@ -777,7 +777,7 @@
 									"parentStyle": true,
 									"left": 835.5,
 									"top": 653,
-									"width": 93.0908203125,
+									"width": 92,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggfckj0xl7Yo="
@@ -987,7 +987,7 @@
 									"parentStyle": true,
 									"left": 818,
 									"top": 277,
-									"width": 124.8671875,
+									"width": 124,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggfdl0kyU6ZM="
@@ -1407,7 +1407,7 @@
 									"parentStyle": true,
 									"left": 829.5,
 									"top": 557,
-									"width": 103.9072265625,
+									"width": 103,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggffg+0zyrTc="
@@ -1617,7 +1617,7 @@
 									"parentStyle": true,
 									"left": 782.5,
 									"top": 749,
-									"width": 223.103515625,
+									"width": 222,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggfgt9E0hYWQ="
@@ -1827,7 +1827,7 @@
 									"parentStyle": true,
 									"left": 782,
 									"top": 837,
-									"width": 221.65625,
+									"width": 221,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggfh4Z01QMMU="
@@ -2037,7 +2037,7 @@
 									"parentStyle": true,
 									"left": 798.5,
 									"top": 917,
-									"width": 184.12255859375,
+									"width": 183,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggfjGlU1/IOk="
@@ -2244,7 +2244,7 @@
 									"parentStyle": true,
 									"left": 812,
 									"top": 997,
-									"width": 134.2490234375,
+									"width": 133,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGggfkojE2v8Ts="
@@ -6394,7 +6394,7 @@
 									"parentStyle": true,
 									"left": 776,
 									"top": 1077,
-									"width": 192.787109375,
+									"width": 192,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGgghA0SvfvQlE="
@@ -6881,7 +6881,7 @@
 									"parentStyle": true,
 									"left": 821.5,
 									"top": 437,
-									"width": 103.17724609375,
+									"width": 102,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGgghNaJRG01vM="
@@ -28816,9 +28816,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 24.72998046875,
+															"left": 22.55908203125,
 															"top": 13,
-															"width": 67.9326171875,
+															"width": 62.8037109375,
 															"height": 13,
 															"text": "Interaction1"
 														},
@@ -28832,7 +28832,7 @@
 															"parentStyle": true,
 															"left": 5,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -32296,9 +32296,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 136.72998046875,
+															"left": 135.99365234375,
 															"top": 741,
-															"width": 184.26611328125,
+															"width": 165.29931640625,
 															"height": 13,
 															"text": "Cliente selecciona transferencia"
 														},
@@ -32312,7 +32312,7 @@
 															"parentStyle": true,
 															"left": 117,
 															"top": 741,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -33334,9 +33334,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 128.72998046875,
+															"left": 127.99365234375,
 															"top": 957,
-															"width": 184.26611328125,
+															"width": 165.29931640625,
 															"height": 13,
 															"text": "Cliente selecciona transferencia"
 														},
@@ -33350,7 +33350,7 @@
 															"parentStyle": true,
 															"left": 109,
 															"top": 957,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -40145,9 +40145,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 67.9326171875,
+															"width": 62.8037109375,
 															"height": 13,
 															"text": "Interaction1"
 														},
@@ -40161,7 +40161,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -42935,9 +42935,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 96.72998046875,
+															"left": 95.99365234375,
 															"top": 453,
-															"width": 100.4453125,
+															"width": 91.33642578125,
 															"height": 13,
 															"text": "Sin coincidencias"
 														},
@@ -42951,7 +42951,7 @@
 															"parentStyle": true,
 															"left": 77,
 															"top": 453,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -44023,9 +44023,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 67.9326171875,
+															"width": 62.8037109375,
 															"height": 13,
 															"text": "Interaction1"
 														},
@@ -44039,7 +44039,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -45862,9 +45862,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 135.9599609375,
+															"left": 132.3291015625,
 															"top": 253,
-															"width": 206.68603515625,
+															"width": 187.02099609375,
 															"height": 13,
 															"text": "datos invalidos o producto existente"
 														},
@@ -45878,7 +45878,7 @@
 															"parentStyle": true,
 															"left": 109,
 															"top": 253,
-															"width": 20.9599609375,
+															"width": 17.3291015625,
 															"height": 13,
 															"text": "seq"
 														},
@@ -46548,9 +46548,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 24.72998046875,
+															"left": 22.55908203125,
 															"top": 5,
-															"width": 67.9326171875,
+															"width": 62.8037109375,
 															"height": 13,
 															"text": "Interaction1"
 														},
@@ -46564,7 +46564,7 @@
 															"parentStyle": true,
 															"left": 5,
 															"top": 5,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -48411,9 +48411,9 @@
 																	},
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 32.72998046875,
+																	"left": 30.55908203125,
 																	"top": 13,
-																	"width": 369.24951171875,
+																	"width": 336.49560546875,
 																	"height": 13,
 																	"text": "CU04_AdministrarPedidos_Parte1_ConsultarBuscar_VerDetalle"
 																},
@@ -48427,7 +48427,7 @@
 																	"parentStyle": true,
 																	"left": 13,
 																	"top": 13,
-																	"width": 13.72998046875,
+																	"width": 11.55908203125,
 																	"height": 13,
 																	"text": "sd"
 																}
@@ -49553,7 +49553,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 95.07177734375,
+																	"left": 93.61181640625,
 																	"top": 259,
 																	"height": 13
 																},
@@ -49567,7 +49567,7 @@
 																	"parentStyle": true,
 																	"left": 71,
 																	"top": 259,
-																	"width": 18.07177734375,
+																	"width": 16.61181640625,
 																	"height": 13,
 																	"text": "opt"
 																},
@@ -49601,7 +49601,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 292,
-																					"width": 201.60791015625,
+																					"width": 185.19287109375,
 																					"height": 13,
 																					"text": "[hay criterios de búsqueda o filtros]"
 																				}
@@ -49660,7 +49660,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 530.72998046875,
+																	"left": 529.99365234375,
 																	"top": 461,
 																	"height": 13
 																},
@@ -49674,7 +49674,7 @@
 																	"parentStyle": true,
 																	"left": 511,
 																	"top": 461,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -49708,7 +49708,7 @@
 																					"parentStyle": true,
 																					"left": 526,
 																					"top": 494,
-																					"width": 127.91162109375,
+																					"width": 117.6728515625,
 																					"height": 13,
 																					"text": "[no hay coincidencias]"
 																				}
@@ -49743,7 +49743,7 @@
 																					"parentStyle": true,
 																					"left": 526,
 																					"top": 558,
-																					"width": 109.83984375,
+																					"width": 101.4228515625,
 																					"height": 13,
 																					"text": "[hay coincidencias]"
 																				}
@@ -49802,7 +49802,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 95.07177734375,
+																	"left": 93.61181640625,
 																	"top": 725,
 																	"height": 13
 																},
@@ -49816,7 +49816,7 @@
 																	"parentStyle": true,
 																	"left": 71,
 																	"top": 725,
-																	"width": 18.07177734375,
+																	"width": 16.61181640625,
 																	"height": 13,
 																	"text": "opt"
 																},
@@ -49850,7 +49850,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 758,
-																					"width": 212.849609375,
+																					"width": 195.39990234375,
 																					"height": 13,
 																					"text": "[opción = ver el detalle de un pedido]"
 																				}
@@ -49909,7 +49909,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 1213.07177734375,
+																	"left": 1211.61181640625,
 																	"top": 927,
 																	"height": 13
 																},
@@ -49923,7 +49923,7 @@
 																	"parentStyle": true,
 																	"left": 1189,
 																	"top": 927,
-																	"width": 18.07177734375,
+																	"width": 16.61181640625,
 																	"height": 13,
 																	"text": "opt"
 																},
@@ -49957,7 +49957,7 @@
 																					"parentStyle": true,
 																					"left": 1204,
 																					"top": 960,
-																					"width": 191.1533203125,
+																					"width": 172.6435546875,
 																					"height": 13,
 																					"text": "[método de pago = transferencia]"
 																				}
@@ -50016,7 +50016,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 535.07177734375,
+																	"left": 533.61181640625,
 																	"top": 1087,
 																	"height": 13
 																},
@@ -50030,7 +50030,7 @@
 																	"parentStyle": true,
 																	"left": 511,
 																	"top": 1087,
-																	"width": 18.07177734375,
+																	"width": 16.61181640625,
 																	"height": 13,
 																	"text": "opt"
 																},
@@ -50064,7 +50064,7 @@
 																					"parentStyle": true,
 																					"left": 526,
 																					"top": 1120,
-																					"width": 270.9814453125,
+																					"width": 241.87109375,
 																					"height": 13,
 																					"text": "[el estado cambió desde que se mostró la lista]"
 																				}
@@ -53622,9 +53622,9 @@
 																	},
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 32.72998046875,
+																	"left": 30.55908203125,
 																	"top": 13,
-																	"width": 335.283203125,
+																	"width": 305.44921875,
 																	"height": 13,
 																	"text": "CU04_AdministrarPedidos_Parte2_RegistrarPagoEfectivo"
 																},
@@ -53638,7 +53638,7 @@
 																	"parentStyle": true,
 																	"left": 13,
 																	"top": 13,
-																	"width": 13.72998046875,
+																	"width": 11.55908203125,
 																	"height": 13,
 																	"text": "sd"
 																}
@@ -54885,7 +54885,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 76.72998046875,
+																	"left": 75.99365234375,
 																	"top": 293,
 																	"height": 13
 																},
@@ -54899,7 +54899,7 @@
 																	"parentStyle": true,
 																	"left": 57,
 																	"top": 293,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -54933,7 +54933,7 @@
 																					"parentStyle": true,
 																					"left": 72,
 																					"top": 326,
-																					"width": 170.51708984375,
+																					"width": 158.462890625,
 																					"height": 13,
 																					"text": "[la fecha límite ya se cumplió]"
 																				}
@@ -54968,7 +54968,7 @@
 																					"parentStyle": true,
 																					"left": 72,
 																					"top": 432,
-																					"width": 145.98974609375,
+																					"width": 131.015625,
 																					"height": 13,
 																					"text": "[el apartado está vigente]"
 																				}
@@ -55027,7 +55027,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 101.578125,
+																	"left": 100.11181640625,
 																	"top": 481,
 																	"height": 13
 																},
@@ -55041,7 +55041,7 @@
 																	"parentStyle": true,
 																	"left": 71,
 																	"top": 481,
-																	"width": 24.578125,
+																	"width": 23.11181640625,
 																	"height": 13,
 																	"text": "loop"
 																},
@@ -55075,7 +55075,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 514,
-																					"width": 131.87890625,
+																					"width": 124.66162109375,
 																					"height": 13,
 																					"text": "[monto recibido < total]"
 																				}
@@ -55134,7 +55134,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 391.72998046875,
+																	"left": 390.99365234375,
 																	"top": 929,
 																	"height": 13
 																},
@@ -55148,7 +55148,7 @@
 																	"parentStyle": true,
 																	"left": 372,
 																	"top": 929,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -55182,7 +55182,7 @@
 																					"parentStyle": true,
 																					"left": 387,
 																					"top": 962,
-																					"width": 127.181640625,
+																					"width": 118.3837890625,
 																					"height": 13,
 																					"text": "[falló alguna escritura]"
 																				}
@@ -55217,7 +55217,7 @@
 																					"parentStyle": true,
 																					"left": 387,
 																					"top": 1050,
-																					"width": 93.9580078125,
+																					"width": 85.1982421875,
 																					"height": 13,
 																					"text": "[todo se guardó]"
 																				}
@@ -58898,9 +58898,9 @@
 																	},
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 32.72998046875,
+																	"left": 30.55908203125,
 																	"top": 13,
-																	"width": 275.8056640625,
+																	"width": 251.3037109375,
 																	"height": 13,
 																	"text": "CU04_AdministrarPedidos_Parte3_ValidarPago"
 																},
@@ -58914,7 +58914,7 @@
 																	"parentStyle": true,
 																	"left": 13,
 																	"top": 13,
-																	"width": 13.72998046875,
+																	"width": 11.55908203125,
 																	"height": 13,
 																	"text": "sd"
 																}
@@ -60403,7 +60403,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 76.72998046875,
+																	"left": 75.99365234375,
 																	"top": 197,
 																	"height": 13
 																},
@@ -60417,7 +60417,7 @@
 																	"parentStyle": true,
 																	"left": 57,
 																	"top": 197,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -60451,7 +60451,7 @@
 																					"parentStyle": true,
 																					"left": 72,
 																					"top": 230,
-																					"width": 471.935546875,
+																					"width": 429.45068359375,
 																					"height": 13,
 																					"text": "[opción = «Aprobar pago», estado = pago_en_revision y el comprobante coincide]"
 																				}
@@ -60486,7 +60486,7 @@
 																					"parentStyle": true,
 																					"left": 72,
 																					"top": 534,
-																					"width": 604.89990234375,
+																					"width": 546.0380859375,
 																					"height": 13,
 																					"text": "[opción = «Rechazar comprobante», estado = pago_en_revision y no coincide o no se refleja el depósito]"
 																				}
@@ -60545,7 +60545,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 101.578125,
+																	"left": 100.11181640625,
 																	"top": 679,
 																	"height": 13
 																},
@@ -60559,7 +60559,7 @@
 																	"parentStyle": true,
 																	"left": 71,
 																	"top": 679,
-																	"width": 24.578125,
+																	"width": 23.11181640625,
 																	"height": 13,
 																	"text": "loop"
 																},
@@ -60593,7 +60593,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 712,
-																					"width": 105.50439453125,
+																					"width": 98.91552734375,
 																					"height": 13,
 																					"text": "[motivo en blanco]"
 																				}
@@ -60652,7 +60652,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 290.72998046875,
+																	"left": 289.99365234375,
 																	"top": 1013,
 																	"height": 13
 																},
@@ -60666,7 +60666,7 @@
 																	"parentStyle": true,
 																	"left": 271,
 																	"top": 1013,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -60700,7 +60700,7 @@
 																					"parentStyle": true,
 																					"left": 286,
 																					"top": 1046,
-																					"width": 127.181640625,
+																					"width": 118.3837890625,
 																					"height": 13,
 																					"text": "[falló alguna escritura]"
 																				}
@@ -60735,7 +60735,7 @@
 																					"parentStyle": true,
 																					"left": 286,
 																					"top": 1134,
-																					"width": 93.9580078125,
+																					"width": 85.1982421875,
 																					"height": 13,
 																					"text": "[todo se guardó]"
 																				}
@@ -60794,7 +60794,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 1451.72998046875,
+																	"left": 1450.99365234375,
 																	"top": 1231,
 																	"height": 13
 																},
@@ -60808,7 +60808,7 @@
 																	"parentStyle": true,
 																	"left": 1432,
 																	"top": 1231,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -60842,7 +60842,7 @@
 																					"parentStyle": true,
 																					"left": 1447,
 																					"top": 1264,
-																					"width": 120.68798828125,
+																					"width": 112.27099609375,
 																					"height": 13,
 																					"text": "[no se pudo notificar]"
 																				}
@@ -60877,7 +60877,7 @@
 																					"parentStyle": true,
 																					"left": 1447,
 																					"top": 1328,
-																					"width": 31.07177734375,
+																					"width": 28.869140625,
 																					"height": 13,
 																					"text": "[else]"
 																				}
@@ -65658,9 +65658,9 @@
 																	},
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 32.72998046875,
+																	"left": 30.55908203125,
 																	"top": 13,
-																	"width": 403.228515625,
+																	"width": 366.08203125,
 																	"height": 13,
 																	"text": "CU04_AdministrarPedidos_Parte4_ActualizarEstado_CancelarPedido"
 																},
@@ -65674,7 +65674,7 @@
 																	"parentStyle": true,
 																	"left": 13,
 																	"top": 13,
-																	"width": 13.72998046875,
+																	"width": 11.55908203125,
 																	"height": 13,
 																	"text": "sd"
 																}
@@ -67042,7 +67042,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 76.72998046875,
+																	"left": 75.99365234375,
 																	"top": 181,
 																	"height": 13
 																},
@@ -67056,7 +67056,7 @@
 																	"parentStyle": true,
 																	"left": 57,
 																	"top": 181,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -67090,7 +67090,7 @@
 																					"parentStyle": true,
 																					"left": 72,
 																					"top": 214,
-																					"width": 174.52880859375,
+																					"width": 161.46533203125,
 																					"height": 13,
 																					"text": "[opción = «Actualizar estado»]"
 																				}
@@ -67125,7 +67125,7 @@
 																					"parentStyle": true,
 																					"left": 72,
 																					"top": 582,
-																					"width": 169.482421875,
+																					"width": 155.6953125,
 																					"height": 13,
 																					"text": "[opción = «Cancelar pedido»]"
 																				}
@@ -67184,7 +67184,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 101.578125,
+																	"left": 100.11181640625,
 																	"top": 359,
 																	"height": 13
 																},
@@ -67198,7 +67198,7 @@
 																	"parentStyle": true,
 																	"left": 71,
 																	"top": 359,
-																	"width": 24.578125,
+																	"width": 23.11181640625,
 																	"height": 13,
 																	"text": "loop"
 																},
@@ -67232,7 +67232,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 392,
-																					"width": 390.990234375,
+																					"width": 348.01025390625,
 																					"height": 13,
 																					"text": "[el estado no sigue la secuencia o es «Enviado» sin datos de envío]"
 																				}
@@ -67291,7 +67291,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 90.72998046875,
+																	"left": 89.99365234375,
 																	"top": 655,
 																	"height": 13
 																},
@@ -67305,7 +67305,7 @@
 																	"parentStyle": true,
 																	"left": 71,
 																	"top": 655,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -67339,7 +67339,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 688,
-																					"width": 179.61328125,
+																					"width": 161.103515625,
 																					"height": 13,
 																					"text": "[estado = enviado o entregado]"
 																				}
@@ -67374,7 +67374,7 @@
 																					"parentStyle": true,
 																					"left": 86,
 																					"top": 794,
-																					"width": 231.81640625,
+																					"width": 207.75244140625,
 																					"height": 13,
 																					"text": "[estado ≠ enviado y estado ≠ entregado]"
 																				}
@@ -67433,7 +67433,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 281.07177734375,
+																	"left": 279.61181640625,
 																	"top": 1047,
 																	"height": 13
 																},
@@ -67447,7 +67447,7 @@
 																	"parentStyle": true,
 																	"left": 257,
 																	"top": 1047,
-																	"width": 18.07177734375,
+																	"width": 16.61181640625,
 																	"height": 13,
 																	"text": "opt"
 																},
@@ -67481,7 +67481,7 @@
 																					"parentStyle": true,
 																					"left": 272,
 																					"top": 1080,
-																					"width": 274.60595703125,
+																					"width": 252.3193359375,
 																					"height": 13,
 																					"text": "[se confirmó una acción que modifica el pedido]"
 																				}
@@ -67540,7 +67540,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 290.72998046875,
+																	"left": 289.99365234375,
 																	"top": 1153,
 																	"height": 13
 																},
@@ -67554,7 +67554,7 @@
 																	"parentStyle": true,
 																	"left": 271,
 																	"top": 1153,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -67588,7 +67588,7 @@
 																					"parentStyle": true,
 																					"left": 286,
 																					"top": 1186,
-																					"width": 127.181640625,
+																					"width": 118.3837890625,
 																					"height": 13,
 																					"text": "[falló alguna escritura]"
 																				}
@@ -67623,7 +67623,7 @@
 																					"parentStyle": true,
 																					"left": 286,
 																					"top": 1274,
-																					"width": 93.9580078125,
+																					"width": 85.1982421875,
 																					"height": 13,
 																					"text": "[todo se guardó]"
 																				}
@@ -67682,7 +67682,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 1356.72998046875,
+																	"left": 1355.99365234375,
 																	"top": 1371,
 																	"height": 13
 																},
@@ -67696,7 +67696,7 @@
 																	"parentStyle": true,
 																	"left": 1337,
 																	"top": 1371,
-																	"width": 13.72998046875,
+																	"width": 12.99365234375,
 																	"height": 13,
 																	"text": "alt"
 																},
@@ -67730,7 +67730,7 @@
 																					"parentStyle": true,
 																					"left": 1352,
 																					"top": 1404,
-																					"width": 120.68798828125,
+																					"width": 112.27099609375,
 																					"height": 13,
 																					"text": "[no se pudo notificar]"
 																				}
@@ -67765,7 +67765,7 @@
 																					"parentStyle": true,
 																					"left": 1352,
 																					"top": 1468,
-																					"width": 31.07177734375,
+																					"width": 28.869140625,
 																					"height": 13,
 																					"text": "[else]"
 																				}
@@ -72191,9 +72191,9 @@
 																	},
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 32.72998046875,
+																	"left": 30.55908203125,
 																	"top": 13,
-																	"width": 320.11865234375,
+																	"width": 293.1728515625,
 																	"height": 13,
 																	"text": "CU04_AdministrarPedidos_S6_CancelacionAutomatica"
 																},
@@ -72207,7 +72207,7 @@
 																	"parentStyle": true,
 																	"left": 13,
 																	"top": 13,
-																	"width": 13.72998046875,
+																	"width": 11.55908203125,
 																	"height": 13,
 																	"text": "sd"
 																}
@@ -73091,7 +73091,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 141.578125,
+																	"left": 140.11181640625,
 																	"top": 197,
 																	"height": 13
 																},
@@ -73105,7 +73105,7 @@
 																	"parentStyle": true,
 																	"left": 111,
 																	"top": 197,
-																	"width": 24.578125,
+																	"width": 23.11181640625,
 																	"height": 13,
 																	"text": "loop"
 																},
@@ -73139,7 +73139,7 @@
 																					"parentStyle": true,
 																					"left": 126,
 																					"top": 230,
-																					"width": 172.70703125,
+																					"width": 153.765625,
 																					"height": 13,
 																					"text": "[el sistema está en operación]"
 																				}
@@ -73198,7 +73198,7 @@
 																	"visible": false,
 																	"font": "Arial;13;0",
 																	"parentStyle": true,
-																	"left": 366.578125,
+																	"left": 365.11181640625,
 																	"top": 327,
 																	"height": 13
 																},
@@ -73212,7 +73212,7 @@
 																	"parentStyle": true,
 																	"left": 336,
 																	"top": 327,
-																	"width": 24.578125,
+																	"width": 23.11181640625,
 																	"height": 13,
 																	"text": "loop"
 																},
@@ -73246,7 +73246,7 @@
 																					"parentStyle": true,
 																					"left": 351,
 																					"top": 360,
-																					"width": 148.88427734375,
+																					"width": 136.0810546875,
 																					"height": 13,
 																					"text": "[por cada pedido vencido]"
 																				}
@@ -275897,7 +275897,7 @@
 													"parentStyle": true,
 													"left": 749,
 													"top": 1135,
-													"width": 357.37646484375,
+													"width": 331.33837890625,
 													"height": 13,
 													"text": "IVarianteProductoBO"
 												},
@@ -275935,7 +275935,7 @@
 											"parentStyle": true,
 											"left": 744,
 											"top": 1128,
-											"width": 367.37646484375,
+											"width": 341.33837890625,
 											"height": 25,
 											"stereotypeLabel": {
 												"$ref": "AAAAAAGhrrrfvPmeUq4="
@@ -275963,7 +275963,7 @@
 											"parentStyle": true,
 											"left": 744,
 											"top": 1153,
-											"width": 367.37646484375,
+											"width": 341.33837890625,
 											"height": 10
 										},
 										{
@@ -275989,7 +275989,7 @@
 													"parentStyle": true,
 													"left": 749,
 													"top": 1168,
-													"width": 357.37646484375,
+													"width": 331.33837890625,
 													"height": 13,
 													"text": "+listarPorProducto(idProducto: Long): List<VarianteProducto>",
 													"horizontalAlignment": 0
@@ -275999,7 +275999,7 @@
 											"parentStyle": true,
 											"left": 744,
 											"top": 1163,
-											"width": 367.37646484375,
+											"width": 341.33837890625,
 											"height": 23
 										},
 										{
@@ -276046,7 +276046,7 @@
 									"containerChangeable": true,
 									"left": 744,
 									"top": 1128,
-									"width": 366.37646484375,
+									"width": 340.33837890625,
 									"height": 58,
 									"autoResize": true,
 									"stereotypeDisplay": "none",
@@ -276154,7 +276154,7 @@
 											"visible": false,
 											"font": "Arial;13;0",
 											"parentStyle": false,
-											"left": 513,
+											"left": 514,
 											"top": 1106,
 											"height": 13,
 											"alpha": 0.5235987755982988,
@@ -276199,7 +276199,7 @@
 											"font": "Arial;13;0",
 											"parentStyle": false,
 											"left": 507,
-											"top": 1133,
+											"top": 1134,
 											"height": 13,
 											"alpha": -0.5235987755982988,
 											"distance": 25,
@@ -276221,7 +276221,7 @@
 											"font": "Arial;13;0",
 											"parentStyle": false,
 											"left": 718,
-											"top": 1121,
+											"top": 1122,
 											"height": 13,
 											"alpha": -0.5235987755982988,
 											"distance": 30,
@@ -276242,7 +276242,7 @@
 											"font": "Arial;13;0",
 											"parentStyle": false,
 											"left": 716,
-											"top": 1107,
+											"top": 1108,
 											"height": 13,
 											"alpha": -0.7853981633974483,
 											"distance": 40,
@@ -276263,7 +276263,7 @@
 											"font": "Arial;13;0",
 											"parentStyle": false,
 											"left": 720,
-											"top": 1148,
+											"top": 1149,
 											"height": 13,
 											"alpha": 0.5235987755982988,
 											"distance": 25,
@@ -276315,7 +276315,7 @@
 										"$ref": "AAAAAAGhrpqasNQCoqA="
 									},
 									"lineStyle": 1,
-									"points": "487:1126;743:1144",
+									"points": "487:1126;743:1145",
 									"showVisibility": true,
 									"nameLabel": {
 										"$ref": "AAAAAAGhrruxdSlLRKs="
@@ -276438,7 +276438,7 @@
 										"$ref": "AAAAAAGhrp+Kpv6232Y="
 									},
 									"lineStyle": 1,
-									"points": "336:1209;743:1173",
+									"points": "336:1208;743:1172",
 									"showVisibility": true,
 									"nameLabel": {
 										"$ref": "AAAAAAGhrrvDpzBX8PE="
@@ -295016,17 +295016,17 @@
 													},
 													"font": "Arial;13;0",
 													"parentStyle": false,
-													"left": 2679,
+													"left": 2687,
 													"top": 2144,
-													"width": 153.18798828125,
+													"width": 203.06787109375,
 													"height": 13,
-													"alpha": 1.076854038150533,
-													"distance": 59.0592922409336,
+													"alpha": 1.2525783615567814,
+													"distance": 89.49301648732151,
 													"hostEdge": {
 														"$ref": "AAAAAAGhs2E59/0hZG8="
 													},
 													"edgePosition": 1,
-													"text": "45 : Message33"
+													"text": "45 : validarDisponibilidad():boolean"
 												},
 												{
 													"_type": "EdgeLabelView",
@@ -296082,6 +296082,9 @@
 									},
 									"target": {
 										"$ref": "AAAAAAGhsi+S4xhisBY="
+									},
+									"signature": {
+										"$ref": "AAAAAAGhqjUWfRonXC0="
 									}
 								},
 								{
@@ -312600,9 +312603,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 227.6015625,
+															"width": 206.705078125,
 															"height": 13,
 															"text": "Front 1 · Consultar, buscar y ver detalle"
 														},
@@ -312616,7 +312619,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -313974,7 +313977,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 95.07177734375,
+															"left": 93.61181640625,
 															"top": 629,
 															"height": 13
 														},
@@ -313988,7 +313991,7 @@
 															"parentStyle": true,
 															"left": 71,
 															"top": 629,
-															"width": 18.07177734375,
+															"width": 16.61181640625,
 															"height": 13,
 															"text": "opt"
 														},
@@ -314022,7 +314025,7 @@
 																			"parentStyle": true,
 																			"left": 86,
 																			"top": 662,
-																			"width": 223.98974609375,
+																			"width": 208.2919921875,
 																			"height": 13,
 																			"text": "[el administrador captura texto o filtros]"
 																		}
@@ -320455,9 +320458,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 204.48974609375,
+															"width": 185.5546875,
 															"height": 13,
 															"text": "Front 2 · Registrar pago en efectivo"
 														},
@@ -320471,7 +320474,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -321589,7 +321592,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 76.72998046875,
+															"left": 75.99365234375,
 															"top": 253,
 															"height": 13
 														},
@@ -321603,7 +321606,7 @@
 															"parentStyle": true,
 															"left": 57,
 															"top": 253,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -321637,7 +321640,7 @@
 																			"parentStyle": true,
 																			"left": 72,
 																			"top": 286,
-																			"width": 165.49609375,
+																			"width": 152.6865234375,
 																			"height": 13,
 																			"text": "[pedido.fechaLimite ya pasó]"
 																		}
@@ -321672,7 +321675,7 @@
 																			"parentStyle": true,
 																			"left": 72,
 																			"top": 392,
-																			"width": 104.076171875,
+																			"width": 94.9228515625,
 																			"height": 13,
 																			"text": "[apartado vigente]"
 																		}
@@ -321731,7 +321734,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 101.578125,
+															"left": 100.11181640625,
 															"top": 441,
 															"height": 13
 														},
@@ -321745,7 +321748,7 @@
 															"parentStyle": true,
 															"left": 71,
 															"top": 441,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -321779,7 +321782,7 @@
 																			"parentStyle": true,
 																			"left": 86,
 																			"top": 474,
-																			"width": 131.87890625,
+																			"width": 124.66162109375,
 																			"height": 13,
 																			"text": "[monto recibido < total]"
 																		}
@@ -321838,7 +321841,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 529.72998046875,
+															"left": 528.99365234375,
 															"top": 841,
 															"height": 13
 														},
@@ -321852,7 +321855,7 @@
 															"parentStyle": true,
 															"left": 510,
 															"top": 841,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -321886,7 +321889,7 @@
 																			"parentStyle": true,
 																			"left": 525,
 																			"top": 874,
-																			"width": 153.20068359375,
+																			"width": 141.5146484375,
 																			"height": 13,
 																			"text": "[200 OK · pago registrado]"
 																		}
@@ -321921,7 +321924,7 @@
 																			"parentStyle": true,
 																			"left": 525,
 																			"top": 1178,
-																			"width": 306.4013671875,
+																			"width": 280.48388671875,
 																			"height": 13,
 																			"text": "[409 Conflict · el estado cambió o el apartado venció]"
 																		}
@@ -327212,9 +327215,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 321.32470703125,
+															"width": 289.4912109375,
 															"height": 13,
 															"text": "Front 3 · Validar pago: aprobar o rechazar comprobante"
 														},
@@ -327228,7 +327231,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -328466,7 +328469,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 76.72998046875,
+															"left": 75.99365234375,
 															"top": 197,
 															"height": 13
 														},
@@ -328480,7 +328483,7 @@
 															"parentStyle": true,
 															"left": 57,
 															"top": 197,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -328514,7 +328517,7 @@
 																			"parentStyle": true,
 																			"left": 72,
 																			"top": 230,
-																			"width": 261.60595703125,
+																			"width": 240.77294921875,
 																			"height": 13,
 																			"text": "[el comprobante coincide → «Aprobar pago»]"
 																		}
@@ -328549,7 +328552,7 @@
 																			"parentStyle": true,
 																			"left": 72,
 																			"top": 606,
-																			"width": 394.5703125,
+																			"width": 357.3603515625,
 																			"height": 13,
 																			"text": "[no coincide o no se refleja el depósito → «Rechazar comprobante»]"
 																		}
@@ -328608,7 +328611,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 101.578125,
+															"left": 100.11181640625,
 															"top": 775,
 															"height": 13
 														},
@@ -328622,7 +328625,7 @@
 															"parentStyle": true,
 															"left": 71,
 															"top": 775,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -328656,7 +328659,7 @@
 																			"parentStyle": true,
 																			"left": 86,
 																			"top": 808,
-																			"width": 105.50439453125,
+																			"width": 98.91552734375,
 																			"height": 13,
 																			"text": "[motivo en blanco]"
 																		}
@@ -328715,7 +328718,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 297.72998046875,
+															"left": 296.99365234375,
 															"top": 1421,
 															"height": 13
 														},
@@ -328729,7 +328732,7 @@
 															"parentStyle": true,
 															"left": 278,
 															"top": 1421,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -328763,7 +328766,7 @@
 																			"parentStyle": true,
 																			"left": 293,
 																			"top": 1454,
-																			"width": 218.60693359375,
+																			"width": 202.61083984375,
 																			"height": 13,
 																			"text": "[resultado.notificacionEnviada = false]"
 																		}
@@ -328798,7 +328801,7 @@
 																			"parentStyle": true,
 																			"left": 293,
 																			"top": 1518,
-																			"width": 31.07177734375,
+																			"width": 28.869140625,
 																			"height": 13,
 																			"text": "[else]"
 																		}
@@ -334866,9 +334869,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 257.96875,
+															"width": 234.2666015625,
 															"height": 13,
 															"text": "Front 4 · Actualizar estado y cancelar pedido"
 														},
@@ -334882,7 +334885,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -336120,7 +336123,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 76.72998046875,
+															"left": 75.99365234375,
 															"top": 181,
 															"height": 13
 														},
@@ -336134,7 +336137,7 @@
 															"parentStyle": true,
 															"left": 57,
 															"top": 181,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -336168,7 +336171,7 @@
 																			"parentStyle": true,
 																			"left": 72,
 																			"top": 214,
-																			"width": 121.4052734375,
+																			"width": 112.251953125,
 																			"height": 13,
 																			"text": "[«Actualizar estado»]"
 																		}
@@ -336203,7 +336206,7 @@
 																			"parentStyle": true,
 																			"left": 72,
 																			"top": 990,
-																			"width": 116.35888671875,
+																			"width": 106.48193359375,
 																			"height": 13,
 																			"text": "[«Cancelar pedido»]"
 																		}
@@ -336262,7 +336265,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 101.578125,
+															"left": 100.11181640625,
 															"top": 503,
 															"height": 13
 														},
@@ -336276,7 +336279,7 @@
 															"parentStyle": true,
 															"left": 71,
 															"top": 503,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -336310,7 +336313,7 @@
 																			"parentStyle": true,
 																			"left": 86,
 																			"top": 536,
-																			"width": 344.7412109375,
+																			"width": 307.19482421875,
 																			"height": 13,
 																			"text": "[estado fuera de secuencia o «Enviado» sin datos de envío]"
 																		}
@@ -336369,7 +336372,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 90.72998046875,
+															"left": 89.99365234375,
 															"top": 1111,
 															"height": 13
 														},
@@ -336383,7 +336386,7 @@
 															"parentStyle": true,
 															"left": 71,
 															"top": 1111,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -336417,7 +336420,7 @@
 																			"parentStyle": true,
 																			"left": 86,
 																			"top": 1144,
-																			"width": 179.61328125,
+																			"width": 161.103515625,
 																			"height": 13,
 																			"text": "[estado = enviado o entregado]"
 																		}
@@ -336452,7 +336455,7 @@
 																			"parentStyle": true,
 																			"left": 86,
 																			"top": 1250,
-																			"width": 112.0234375,
+																			"width": 99.962890625,
 																			"height": 13,
 																			"text": "[estado cancelable]"
 																		}
@@ -336511,7 +336514,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 277.07177734375,
+															"left": 275.61181640625,
 															"top": 1719,
 															"height": 13
 														},
@@ -336525,7 +336528,7 @@
 															"parentStyle": true,
 															"left": 253,
 															"top": 1719,
-															"width": 18.07177734375,
+															"width": 16.61181640625,
 															"height": 13,
 															"text": "opt"
 														},
@@ -336559,7 +336562,7 @@
 																			"parentStyle": true,
 																			"left": 268,
 																			"top": 1752,
-																			"width": 177.02978515625,
+																			"width": 163.7060546875,
 																			"height": 13,
 																			"text": "[se recibió ResultadoAccionTs]"
 																		}
@@ -343972,9 +343975,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 180.6416015625,
+															"width": 165.166015625,
 															"height": 13,
 															"text": "Back 1 · Listar, buscar y detalle"
 														},
@@ -343988,7 +343991,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -345225,7 +345228,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 1061.07177734375,
+															"left": 1059.61181640625,
 															"top": 277,
 															"height": 13
 														},
@@ -345239,7 +345242,7 @@
 															"parentStyle": true,
 															"left": 1037,
 															"top": 277,
-															"width": 18.07177734375,
+															"width": 16.61181640625,
 															"height": 13,
 															"text": "opt"
 														},
@@ -345273,7 +345276,7 @@
 																			"parentStyle": true,
 																			"left": 1052,
 																			"top": 310,
-																			"width": 227.6142578125,
+																			"width": 212.98291015625,
 																			"height": 13,
 																			"text": "[criterios.texto no tiene formato de folio]"
 																		}
@@ -345332,7 +345335,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 85.72998046875,
+															"left": 84.99365234375,
 															"top": 653,
 															"height": 13
 														},
@@ -345346,7 +345349,7 @@
 															"parentStyle": true,
 															"left": 66,
 															"top": 653,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -345380,7 +345383,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 686,
-																			"width": 100.4453125,
+																			"width": 95.66552734375,
 																			"height": 13,
 																			"text": "[el folio no existe]"
 																		}
@@ -345415,7 +345418,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 798,
-																			"width": 114.92431640625,
+																			"width": 105.041015625,
 																			"height": 13,
 																			"text": "[pedido encontrado]"
 																		}
@@ -345474,7 +345477,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 1061.07177734375,
+															"left": 1059.61181640625,
 															"top": 919,
 															"height": 13
 														},
@@ -345488,7 +345491,7 @@
 															"parentStyle": true,
 															"left": 1037,
 															"top": 919,
-															"width": 18.07177734375,
+															"width": 16.61181640625,
 															"height": 13,
 															"text": "opt"
 														},
@@ -345522,7 +345525,7 @@
 																			"parentStyle": true,
 																			"left": 1052,
 																			"top": 952,
-																			"width": 248.19970703125,
+																			"width": 232.29248046875,
 																			"height": 13,
 																			"text": "[pedido.metodoPago = TRANSFERENCIA]"
 																		}
@@ -349873,9 +349876,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 203.048828125,
+															"width": 184.0947265625,
 															"height": 13,
 															"text": "Back 2 · Registrar pago en efectivo"
 														},
@@ -349889,7 +349892,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -351606,7 +351609,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 85.72998046875,
+															"left": 84.99365234375,
 															"top": 349,
 															"height": 13
 														},
@@ -351620,7 +351623,7 @@
 															"parentStyle": true,
 															"left": 66,
 															"top": 349,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -351654,7 +351657,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 382,
-																			"width": 185.0087890625,
+																			"width": 169.67919921875,
 																			"height": 13,
 																			"text": "[estado distinto o plazo vencido]"
 																		}
@@ -351689,7 +351692,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 494,
-																			"width": 104.076171875,
+																			"width": 94.9228515625,
 																			"height": 13,
 																			"text": "[apartado vigente]"
 																		}
@@ -351748,7 +351751,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 1111.578125,
+															"left": 1110.11181640625,
 															"top": 711,
 															"height": 13
 														},
@@ -351762,7 +351765,7 @@
 															"parentStyle": true,
 															"left": 1081,
 															"top": 711,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -351796,7 +351799,7 @@
 																			"parentStyle": true,
 																			"left": 1096,
 																			"top": 744,
-																			"width": 153.22607421875,
+																			"width": 139.32470703125,
 																			"height": 13,
 																			"text": "[por cada línea del pedido]"
 																		}
@@ -355265,9 +355268,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 319.8837890625,
+															"width": 288.03125,
 															"height": 13,
 															"text": "Back 3 · Validar pago: aprobar o rechazar comprobante"
 														},
@@ -355281,7 +355284,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -357118,7 +357121,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 85.72998046875,
+															"left": 84.99365234375,
 															"top": 259,
 															"height": 13
 														},
@@ -357132,7 +357135,7 @@
 															"parentStyle": true,
 															"left": 66,
 															"top": 259,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -357166,7 +357169,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 292,
-																			"width": 247.90771484375,
+																			"width": 223.0947265625,
 																			"height": 13,
 																			"text": "[el pedido ya no está en pago_en_revision]"
 																		}
@@ -357201,7 +357204,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 428,
-																			"width": 96.8271484375,
+																			"width": 87.69921875,
 																			"height": 13,
 																			"text": "[estado correcto]"
 																		}
@@ -357260,7 +357263,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 1149.578125,
+															"left": 1148.11181640625,
 															"top": 621,
 															"height": 13
 														},
@@ -357274,7 +357277,7 @@
 															"parentStyle": true,
 															"left": 1119,
 															"top": 621,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -357308,7 +357311,7 @@
 																			"parentStyle": true,
 																			"left": 1134,
 																			"top": 654,
-																			"width": 89.6162109375,
+																			"width": 81.56103515625,
 																			"height": 13,
 																			"text": "[por cada línea]"
 																		}
@@ -363809,9 +363812,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 256.52783203125,
+															"width": 232.806640625,
 															"height": 13,
 															"text": "Back 4 · Actualizar estado y cancelar pedido"
 														},
@@ -363825,7 +363828,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -365422,7 +365425,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 85.72998046875,
+															"left": 84.99365234375,
 															"top": 283,
 															"height": 13
 														},
@@ -365436,7 +365439,7 @@
 															"parentStyle": true,
 															"left": 66,
 															"top": 283,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -365470,7 +365473,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 316,
-																			"width": 245.71142578125,
+																			"width": 225.98291015625,
 																			"height": 13,
 																			"text": "[transición inválida o faltan datos de envío]"
 																		}
@@ -365505,7 +365508,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 452,
-																			"width": 100.43896484375,
+																			"width": 94.935546875,
 																			"height": 13,
 																			"text": "[transición válida]"
 																		}
@@ -365564,7 +365567,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 1037.07177734375,
+															"left": 1035.61181640625,
 															"top": 501,
 															"height": 13
 														},
@@ -365578,7 +365581,7 @@
 															"parentStyle": true,
 															"left": 1013,
 															"top": 501,
-															"width": 18.07177734375,
+															"width": 16.61181640625,
 															"height": 13,
 															"text": "opt"
 														},
@@ -365612,7 +365615,7 @@
 																			"parentStyle": true,
 																			"left": 1028,
 																			"top": 534,
-																			"width": 119.58349609375,
+																			"width": 114.91162109375,
 																			"height": 13,
 																			"text": "[estado = ENVIADO]"
 																		}
@@ -365671,7 +365674,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 85.72998046875,
+															"left": 84.99365234375,
 															"top": 1003,
 															"height": 13
 														},
@@ -365685,7 +365688,7 @@
 															"parentStyle": true,
 															"left": 66,
 															"top": 1003,
-															"width": 13.72998046875,
+															"width": 12.99365234375,
 															"height": 13,
 															"text": "alt"
 														},
@@ -365719,7 +365722,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 1036,
-																			"width": 216.37890625,
+																			"width": 207.34619140625,
 																			"height": 13,
 																			"text": "[estado = ENVIADO o ENTREGADO]"
 																		}
@@ -365754,7 +365757,7 @@
 																			"parentStyle": true,
 																			"left": 81,
 																			"top": 1172,
-																			"width": 69.3798828125,
+																			"width": 63.501953125,
 																			"height": 13,
 																			"text": "[cancelable]"
 																		}
@@ -365813,7 +365816,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 1043.578125,
+															"left": 1042.11181640625,
 															"top": 1317,
 															"height": 13
 														},
@@ -365827,7 +365830,7 @@
 															"parentStyle": true,
 															"left": 1013,
 															"top": 1317,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -365861,7 +365864,7 @@
 																			"parentStyle": true,
 																			"left": 1028,
 																			"top": 1350,
-																			"width": 89.6162109375,
+																			"width": 81.56103515625,
 																			"height": 13,
 																			"text": "[por cada línea]"
 																		}
@@ -372244,9 +372247,9 @@
 															},
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 32.72998046875,
+															"left": 30.55908203125,
 															"top": 13,
-															"width": 209.55517578125,
+															"width": 188.7919921875,
 															"height": 13,
 															"text": "Back 5 · S6 Cancelación automática"
 														},
@@ -372260,7 +372263,7 @@
 															"parentStyle": true,
 															"left": 13,
 															"top": 13,
-															"width": 13.72998046875,
+															"width": 11.55908203125,
 															"height": 13,
 															"text": "sd"
 														}
@@ -373497,7 +373500,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 155.578125,
+															"left": 154.11181640625,
 															"top": 181,
 															"height": 13
 														},
@@ -373511,7 +373514,7 @@
 															"parentStyle": true,
 															"left": 125,
 															"top": 181,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -373545,7 +373548,7 @@
 																			"parentStyle": true,
 																			"left": 140,
 																			"top": 214,
-																			"width": 299.8759765625,
+																			"width": 270.72119140625,
 																			"height": 13,
 																			"text": "[cada 15 min mientras el servicio está en operación]"
 																		}
@@ -373604,7 +373607,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 375.578125,
+															"left": 374.11181640625,
 															"top": 359,
 															"height": 13
 														},
@@ -373618,7 +373621,7 @@
 															"parentStyle": true,
 															"left": 345,
 															"top": 359,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -373652,7 +373655,7 @@
 																			"parentStyle": true,
 																			"left": 360,
 																			"top": 392,
-																			"width": 317.98583984375,
+																			"width": 288.412109375,
 																			"height": 13,
 																			"text": "[por cada pedido vencido (una transacción por pedido)]"
 																		}
@@ -373711,7 +373714,7 @@
 															"visible": false,
 															"font": "Arial;13;0",
 															"parentStyle": true,
-															"left": 389.578125,
+															"left": 388.11181640625,
 															"top": 513,
 															"height": 13
 														},
@@ -373725,7 +373728,7 @@
 															"parentStyle": true,
 															"left": 359,
 															"top": 513,
-															"width": 24.578125,
+															"width": 23.11181640625,
 															"height": 13,
 															"text": "loop"
 														},
@@ -373759,7 +373762,7 @@
 																			"parentStyle": true,
 																			"left": 374,
 																			"top": 546,
-																			"width": 89.6162109375,
+																			"width": 81.56103515625,
 																			"height": 13,
 																			"text": "[por cada línea]"
 																		}
