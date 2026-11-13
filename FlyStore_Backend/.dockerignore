@@ -46,8 +46,7 @@ README.md
 application.properties
 !application-prod.properties
 
-# Tests
-**/src/test/
+# Los tests forman parte de mvn verify durante el build.
 
 # Node modules (si hubiera)
 node_modules/

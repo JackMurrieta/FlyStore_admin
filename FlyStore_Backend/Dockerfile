@@ -20,17 +20,19 @@ WORKDIR /app
 COPY pom.xml .
 COPY API/pom.xml API/
 COPY DTOs/pom.xml DTOs/
-
-# Descargar dependencias (se cachea si no cambian los pom.xml)
-RUN mvn dependency:go-offline -B
+COPY Negocio/pom.xml Negocio/
+COPY Persistencia/pom.xml Persistencia/
+COPY Infraestructura/pom.xml Infraestructura/
 
 # Copiar código fuente
 COPY API/src API/src
 COPY DTOs/src DTOs/src
+COPY Negocio/src Negocio/src
+COPY Persistencia/src Persistencia/src
+COPY Infraestructura/src Infraestructura/src
 
-# Compilar y empaquetar (saltando tests para build más rápido)
-# El JAR se generará en API/target/API-0.0.1-SNAPSHOT.jar
-RUN mvn clean package -DskipTests -B
+# Compilar, verificar las capas y empaquetar el reactor completo.
+RUN mvn clean verify -B
 
 # Verificar que el JAR se creó correctamente
 RUN ls -la API/target/
@@ -69,7 +71,7 @@ EXPOSE 8080
 
 # Health check (opcional - Railway lo usará si está disponible)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/health || exit 1
 
 # Comando para ejecutar la aplicación
 # -Xms: Memoria inicial (512MB)

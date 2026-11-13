@@ -15,8 +15,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>API</module>
         <module>DTOs</module>
+        <module>Persistencia</module>
+        <module>Negocio</module>
+        <module>Infraestructura</module>
+        <module>API</module>
     </modules>
 
     <properties>

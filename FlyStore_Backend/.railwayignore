@@ -63,10 +63,7 @@ README.md
 CONFIGURACION.md
 *.example
 
-# Tests (no necesarios en producción)
-**/src/test/
-test/
-tests/
+# Los tests se necesitan durante mvn verify en el build de Docker.
 
 # Archivos de Claude Code
 .claude/

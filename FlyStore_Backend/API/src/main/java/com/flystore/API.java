@@ -1,9 +1,7 @@
 package com.flystore;
 
-import com.flystore.config.SupabaseProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * Clase principal de la aplicación Spring Boot - FlyStore Backend
@@ -16,7 +14,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @author Usuario
  */
 @SpringBootApplication
-@EnableConfigurationProperties(SupabaseProperties.class)
 public class API {
 
     public static void main(String[] args) {
