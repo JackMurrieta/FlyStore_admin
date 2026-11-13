@@ -13,6 +13,10 @@ Los identificadores de entidades y métodos DAO son Long. Los BO públicos y DTO
 
 ## Migración previa al despliegue
 
+**Base nueva:** ejecutar `Persistencia/migraciones/000_esquema_inicial.sql`, que crea las tablas e incluye tres productos de prueba y los cambios del catálogo. No requiere ejecutar después `001_catalogo.sql`. Ver `Persistencia/migraciones/LEEME.md`.
+
+**Base existente:** usar la migración siguiente, conservando las tablas y datos anteriores.
+
 Revisar y ejecutar manualmente Persistencia/migraciones/001_catalogo.sql contra PostgreSQL antes de desplegar esta versión. No se ha ejecutado sobre ninguna base real.
 
 El script agrega producto.clave, asigna LEGACY-<id> a productos antiguos sin clave, exige clave y crea un índice único insensible a mayúsculas y espacios exteriores. También permite imagen_producto.color_id nulo. No cambia los IDs ni elimina registros. Las claves LEGACY pueden sustituirse manualmente por las claves comerciales deseadas. La migración aborta si los datos existentes violan el índice único.
@@ -21,7 +25,7 @@ JPA mantiene ddl-auto=none. El código no aplica cambios de esquema automáticam
 
 ## Rutas REST
 
-Todas requieren autenticación y rol ADMIN o EMPLEADO mediante la regla existente /api/admin/**.
+Todas requieren autenticación y rol ADMIN o EMPLEADO. Las rutas del diagrama son /api/productos y /api/catalogo; /api/admin/productos y /api/admin/catalogo se conservan como alias compatibles con la implementación anterior y tienen los mismos permisos.
 
 | Método | Ruta | Respuesta |
 | --- | --- | --- |
@@ -32,7 +36,7 @@ Todas requieren autenticación y rol ADMIN o EMPLEADO mediante la regla existent
 | GET | /api/admin/catalogo/filtros | 200 y FiltrosDisponiblesDTO |
 | GET | /api/admin/catalogo/categorias/{idCategoria}/tallas | 200 y lista TallaDTO |
 
-La búsqueda admite texto, idCategoria, idSubcategoria, idMarca y estado como parámetros opcionales. El texto busca por nombre o clave sin distinguir mayúsculas. Los filtros se combinan. El catálogo administrativo puede mostrar borradores e inactivos; no constituye un catálogo público.
+La búsqueda en /api/productos/buscar admite texto, idCategoria, idSubcategoria, idMarca y estado. Exige al menos un filtro no vacío; sin filtros devuelve 400. Para recuperar todos los productos se utiliza GET /api/productos. El texto busca por nombre o clave sin distinguir mayúsculas. Los filtros se combinan. El catálogo administrativo puede mostrar borradores e inactivos; no constituye un catálogo público.
 
 ## Alta
 
@@ -69,4 +73,6 @@ Si existen detalles de venta relacionados con variantes del producto, se cambia 
 
 Se prueban reglas de alta/baja, filtros e IDs, mapeo del agregado, contratos y validación HTTP, preservación de sesión, seguridad y composición entre proyectos. Se valida el metamodelo JPA y la interpretación de las consultas HQL sin abrir conexiones. Falta ejecutar la migración y las pruebas de integración contra el esquema PostgreSQL real.
 
-El frontend existente usa actualmente contratos de alta distintos (File y pasos separados). No se modificó: la integración deberá enviar el JSON completo con URLs que especifica este diagrama. Este backend no añade carga de archivos, edición, reactivación ni endpoints de venta fuera del alcance mostrado.
+La consulta del frontend está conectada en /admin/catalogo siguiendo el flujo Pantalla → hook → CatalogoModel → servicios HTTP → Controllers → BO → DAO. Se cargan productos y después filtros; la búsqueda vacía se rechaza también en presentación, sin enviar peticiones. Las respuestas antiguas no reemplazan resultados recientes.
+
+La integración de alta y baja del frontend sigue pendiente de sus propios flujos. El contrato de alta anterior usa File y pasos separados, mientras que este backend recibe el JSON completo con URLs. No se añaden carga de archivos, edición, reactivación ni endpoints de venta fuera del alcance mostrado.

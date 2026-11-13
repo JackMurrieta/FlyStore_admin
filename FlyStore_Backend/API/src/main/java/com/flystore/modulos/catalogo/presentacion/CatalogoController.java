@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 @RestController
-@RequestMapping("/api/admin/catalogo")
+@RequestMapping({"/api/catalogo", "/api/admin/catalogo"})
 public class CatalogoController {
     private final ICatalogoBO catalogoBO;
     public CatalogoController(ICatalogoBO catalogoBO) { this.catalogoBO=catalogoBO; }

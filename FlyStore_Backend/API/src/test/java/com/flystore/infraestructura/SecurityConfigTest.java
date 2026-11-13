@@ -40,6 +40,8 @@ class SecurityConfigTest {
 
     @Test void rutasPrivadasExigenAutenticacion() throws Exception {
         mvc.perform(get("/api/protegido")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/productos")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/catalogo/filtros")).andExpect(status().isUnauthorized());
         mvc.perform(get("/health")).andExpect(status().isOk());
     }
 
@@ -49,6 +51,14 @@ class SecurityConfigTest {
         for (var role : new String[]{"ROLE_ADMIN", "ROLE_EMPLEADO"}) {
             mvc.perform(get("/api/admin/prueba").with(jwt().authorities(new SimpleGrantedAuthority(role))))
                     .andExpect(status().isOk());
+        }
+        for (var ruta : new String[]{"/api/productos", "/api/catalogo/filtros"}) {
+            mvc.perform(get(ruta).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_CLIENTE"))))
+                    .andExpect(status().isForbidden());
+            for (var role : new String[]{"ROLE_ADMIN", "ROLE_EMPLEADO"}) {
+                mvc.perform(get(ruta).with(jwt().authorities(new SimpleGrantedAuthority(role))))
+                        .andExpect(status().isOk());
+            }
         }
     }
 
@@ -72,7 +82,7 @@ class SecurityConfigTest {
 
     @RestController
     static class Endpoints {
-        @GetMapping({"/health", "/api/protegido", "/api/admin/prueba"})
+        @GetMapping({"/health", "/api/protegido", "/api/admin/prueba", "/api/productos", "/api/catalogo/filtros"})
         String get() { return "ok"; }
         @PostMapping("/api/auth/refresh") String refresh() { return "ok"; }
     }

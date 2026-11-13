@@ -15,6 +15,12 @@ import static com.flystore.soporte.Dobles.puerto;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProductoBOTest {
+    @Test void buscarSinFiltrosSeRechazaAntesDeConsultarPersistencia() {
+        var bo = bo(puerto(IProductoDAO.class, (m,a) -> { throw new AssertionError("No debe consultar el DAO"); }), false);
+        var error = assertThrows(NegocioException.class, () -> bo.buscarProductos("   ", null, "", " ", null));
+        assertEquals(TipoError.DATOS_INVALIDOS, error.getTipoError());
+        assertTrue(error.getMessage().contains("al menos un filtro"));
+    }
     private CrearProductoDTO datos(List<VarianteDTO> variantes, List<PrecioProductoDTO> precios) {
         return new CrearProductoDTO("GORRA-01", "Gorra", "Gorra bordada", "1", "2", "3",
                 List.of("https://example.com/gorra.jpg"), "PUBLICADO", variantes, precios);

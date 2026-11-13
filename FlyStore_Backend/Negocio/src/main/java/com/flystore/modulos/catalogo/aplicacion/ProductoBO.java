@@ -32,6 +32,8 @@ public class ProductoBO implements IProductoBO {
     @Override
     @Transactional(readOnly = true)
     public List<ProductoCatalogoDTO> buscarProductos(String texto, String idCategoria, String idSubcategoria, String idMarca, String estado) {
+        if (vacio(texto) && vacio(idCategoria) && vacio(idSubcategoria) && vacio(idMarca) && vacio(estado))
+            throw invalido("Selecciona al menos un filtro para buscar.");
         EstadoProducto filtro = null;
         if (estado != null && !estado.isBlank()) {
             try {

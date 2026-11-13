@@ -50,6 +50,7 @@
         </dependency>
     </dependencies>
     <properties>
+        <exec.mainClass>com.flystore.API</exec.mainClass>
         <start-class>com.flystore.API</start-class>
     </properties>
     <build>

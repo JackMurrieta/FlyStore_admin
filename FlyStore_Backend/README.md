@@ -35,6 +35,8 @@ Se revisaron `../StarUml/flyStore.mdj` y `../StarUml/diagramFly.mdj`. Contienen 
 
 ## Compilación y ejecución
 
+Para una base Supabase nueva, ejecutar primero [el esquema inicial con datos de prueba](Persistencia/migraciones/000_esquema_inicial.sql) desde SQL Editor. Incluye 25 tablas y tres productos; ver [las instrucciones](Persistencia/migraciones/LEEME.md). El inicial ya incorpora la migración de catálogo. No ejecutarlo sobre una base existente.
+
 Requisitos: JDK 21 y Maven 3.9 o superior.
 
 ```powershell

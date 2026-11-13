@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 @RestController
-@RequestMapping("/api/admin/productos")
+@RequestMapping({"/api/productos", "/api/admin/productos"})
 public class ProductoController {
     private final IProductoBO productoBO;
     public ProductoController(IProductoBO productoBO) { this.productoBO=productoBO; }

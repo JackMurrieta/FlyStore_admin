@@ -1,68 +1,54 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Java/Maven
-/FlyStore_Backend/DTOs/target/
-/FlyStore_Backend/API/target/
+# Compilación Java / Maven
+**/target/
 *.class
 *.jar
 *.war
 *.ear
+hs_err_pid*
+replay_pid*
 
-# Spring Boot - Archivos de configuración con credenciales sensibles
-# Ignorar application.properties pero PERMITIR application.properties.example y application-prod.properties
+# Logs
+*.log
+logs/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Configuración local con credenciales
 **/application.properties
-!**/application.properties.example
-!**/application-prod.properties
 **/application.yml
 **/application.yaml
-# Ignorar otros perfiles excepto prod
-**/application-dev.properties
-**/application-local.properties
-**/application-test.properties
+**/application-*.properties
 **/application-*.yml
 **/application-*.yaml
 
-# Permitir archivos .properties que NO sean de configuración de Spring
-# Si necesitas otros archivos .properties, agrégalos aquí con !ruta/archivo.properties
+# Conservar plantillas y configuración de producción
+!**/application.properties.example
+!**/application-*.properties.example
+!**/application-prod.properties
+!**/application-prod.yml
+!**/application-prod.yaml
 
-# Claude Code
-/.claude/
-.claude/
-
-# Maven
-target/
-*.jar
-*.war
-
-# IDEs
-.idea/
-*.iml
-nbproject/private/
-nbactions.xml
-
-# Secretos
-.env
+# Otras credenciales y certificados privados
 *.local.properties
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# NetBeans
+**/nbproject/private/
+**/nbactions.xml
+
+# Otros IDE
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/

@@ -1,0 +1,34 @@
+# COPIA este archivo como application.properties en esta misma carpeta.
+# Configuracion local para NetBeans. No activar el perfil prod en esta prueba.
+# application.properties esta excluido de Git; no compartas su contrasena.
+
+server.port=8080
+
+# Supabase > Connect > Session pooler > JDBC
+spring.datasource.url=jdbc:postgresql://aws-0-us-east-2.pooler.supabase.com:5432/postgres?sslmode=require
+spring.datasource.username=PEGA_AQUI_EL_VALOR_USER_DE_CONNECT
+spring.datasource.password=PEGA_AQUI_LA_CONTRASENA_DE_LA_BASE
+spring.datasource.hikari.maximum-pool-size=5
+spring.datasource.hikari.connection-timeout=10000
+
+# Las tablas ya se prepararon en SQL Editor. No crearlas ni borrarlas al arrancar.
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.open-in-view=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Pega la URL del proyecto (https://...supabase.co), sin barra final.
+supabase.url=https://TU_PROYECTO.supabase.co
+# Clave publishable del proyecto; no es la contrasena de PostgreSQL.
+supabase.publishable-key=PEGA_AQUI_LA_CLAVE_PUBLISHABLE
+
+# El backend actual valida tokens firmados con ES256.
+spring.security.oauth2.resourceserver.jwt.issuer-uri=${supabase.url}/auth/v1
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri=${supabase.url}/auth/v1/.well-known/jwks.json
+spring.security.oauth2.resourceserver.jwt.jws-algorithms=ES256
+spring.security.oauth2.resourceserver.jwt.audiences=authenticated
+
+# Desarrollo local: mantener ambos proyectos en localhost.
+app.backend-url=http://localhost:8080
+app.frontend-url=http://localhost:5173
+app.cookie.domain=
+app.cookie.secure=false
