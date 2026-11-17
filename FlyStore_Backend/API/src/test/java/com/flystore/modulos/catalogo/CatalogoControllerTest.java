@@ -119,5 +119,19 @@ class CatalogoControllerTest {
         alta.perform(multipart("/api/productos").file(metadata)).andExpect(status().isBadRequest());
         alta.perform(multipart("/api/productos").file(metadata).file(new org.springframework.mock.web.MockMultipartFile(
                 "imagen", "foto.png", "image/png", new byte[]{1,2,3}))).andExpect(status().isBadRequest());
-    }}
+    }
+    @Test void validacionDeCatalogoAtravesDelProxyDePersistenciaDevuelve400() throws Exception {
+        var dao = puerto(IProductoDAO.class, (m,a) -> {
+            if (m.equals("existePorClave")) return false;
+            throw new com.flystore.persistencia.excepcion.DatosCatalogoInvalidosException("Selecciona un color existente");
+        });
+        var proxy = new org.springframework.aop.framework.ProxyFactory(dao);
+        proxy.addAdvice(new org.springframework.dao.support.PersistenceExceptionTranslationInterceptor(new org.springframework.orm.jpa.vendor.HibernateJpaDialect()));
+        var bo = new ProductoBO((IProductoDAO)proxy.getProxy(), id -> false, new ProductoMapper(), null);
+        MockMvcBuilders.standaloneSetup(new ProductoController(bo)).setControllerAdvice(new GlobalExceptionHandler()).build()
+            .perform(post("/api/productos").contentType("application/json").content(ALTA))
+            .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").value("DATOS_INVALIDOS"))
+            .andExpect(jsonPath("$.message").value("Selecciona un color existente"));
+    }
+}
 

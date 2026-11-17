@@ -7,6 +7,7 @@ import com.flystore.persistencia.entidades.TipoPrecio;
 import com.flystore.modulos.catalogo.aplicacion.mappers.ProductoMapper;
 import com.flystore.dominio.excepcion.*;
 import java.util.*;
+import com.flystore.persistencia.excepcion.DatosCatalogoInvalidosException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -62,7 +63,7 @@ public class ProductoBO implements IProductoBO {
         validarProductoNoDuplicado(dto.clave());
         try {
             productoDAO.guardar(productoMapper.aProducto(dto));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | DatosCatalogoInvalidosException e) {
             throw invalido(e.getMessage());
         }
     }
@@ -93,7 +94,7 @@ public class ProductoBO implements IProductoBO {
         } catch (RuntimeException | Error e) {
             // En producción también cubre errores durante el commit mediante afterCompletion.
             if (!transaccion) retirarImagen(imagen);
-            if (e instanceof IllegalArgumentException) throw invalido(e.getMessage());
+            if (e instanceof IllegalArgumentException || e instanceof DatosCatalogoInvalidosException) throw invalido(e.getMessage());
             throw e;
         }
     }

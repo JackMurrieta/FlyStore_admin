@@ -3,6 +3,7 @@ package com.flystore.persistencia.dao;
 import com.flystore.persistencia.dao.interfaces.IProductoDAO;
 import com.flystore.persistencia.entidades.*;
 import jakarta.persistence.*;
+import com.flystore.persistencia.excepcion.DatosCatalogoInvalidosException;
 import java.util.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,10 +69,10 @@ public class ProductoDAO implements IProductoDAO {
             throw new EntityNotFoundException("Subcategoría o marca no encontrada");
         }
         if (!subcategoria.getCategoria().getId().equals(solicitada.getCategoria().getId())) {
-            throw new IllegalArgumentException("La subcategoría no pertenece a la categoría seleccionada");
+            throw new DatosCatalogoInvalidosException("La subcategoría no pertenece a la categoría seleccionada");
         }
         if (!Boolean.TRUE.equals(marca.getActivo())) {
-            throw new IllegalArgumentException("La marca no está activa");
+            throw new DatosCatalogoInvalidosException("La marca no está activa");
         }
         producto.setSubcategoria(subcategoria);
         producto.setMarca(marca);
@@ -81,9 +82,8 @@ public class ProductoDAO implements IProductoDAO {
             var tallas = entityManager.createQuery("select t from Talla t where lower(t.etiqueta) = :nombre and t.tipoTalla.categoria.id = :categoria", Talla.class)
                     .setParameter("nombre", variante.getTalla().getEtiqueta().toLowerCase(Locale.ROOT))
                     .setParameter("categoria", subcategoria.getCategoria().getId()).setMaxResults(2).getResultList();
-            if (colores.size() != 1 || tallas.size() != 1) {
-                throw new IllegalArgumentException("Talla o color inexistente, ambiguo o ajeno a la categoría");
-            }
+            if (colores.size() != 1) throw new DatosCatalogoInvalidosException("Selecciona un color existente y sin duplicados en el catálogo");
+            if (tallas.size() != 1) throw new DatosCatalogoInvalidosException("Selecciona una talla válida y sin duplicados para la categoría");
             variante.setColor(colores.getFirst());
             variante.setTalla(tallas.getFirst());
             variante.setProducto(producto);

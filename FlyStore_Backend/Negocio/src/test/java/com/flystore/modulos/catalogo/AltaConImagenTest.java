@@ -57,7 +57,7 @@ class AltaConImagenTest {
         var eliminada = new AtomicBoolean();
         var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> {
             if (m.equals("existePorClave")) return false;
-            throw new IllegalArgumentException("Talla inválida");
+            throw new com.flystore.persistencia.excepcion.DatosCatalogoInvalidosException("Talla inválida");
         }), id -> false, new ProductoMapper(), puerto(IAlmacenImagenes.class, (m,a) -> {
             if (m.equals("subir")) return subida;
             assertEquals(subida.ruta(), a[0]); eliminada.set(true); throw new IllegalStateException("Storage no disponible");
