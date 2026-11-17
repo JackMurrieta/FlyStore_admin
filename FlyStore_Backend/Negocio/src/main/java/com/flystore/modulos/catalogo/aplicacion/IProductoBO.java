@@ -4,6 +4,7 @@ import com.flystore.contratos.catalogo.*;
 import java.util.List;
 
 public interface IProductoBO {
+    void crearProductoConImagen(CrearProductoDTO dto, com.flystore.modulos.catalogo.aplicacion.modelo.ArchivoImagen imagen);
 
     List<ProductoCatalogoDTO> obtenerProductos();
 

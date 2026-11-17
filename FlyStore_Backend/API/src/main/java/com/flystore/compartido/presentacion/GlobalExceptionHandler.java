@@ -111,8 +111,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
-        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+        org.springframework.web.multipart.support.MissingServletRequestPartException.class,
+        org.springframework.web.multipart.MultipartException.class})
     public ResponseEntity<ErrorDTO> handleSolicitudInvalida(Exception ex) {
         return ResponseEntity.badRequest().body(new ErrorDTO("DATOS_INVALIDOS", "La solicitud contiene datos inválidos"));
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorDTO> handleArchivoDemasiadoGrande(Exception ex) {
+        return ResponseEntity.status(413).body(new ErrorDTO("IMAGEN_DEMASIADO_GRANDE", "La imagen no debe superar 5 MB"));
     }
 }

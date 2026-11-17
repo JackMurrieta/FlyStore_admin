@@ -14,6 +14,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.flystore.persistencia.dao.interfaces.IProductoDAO;
+import com.flystore.persistencia.entidades.Producto;
+import com.flystore.modulos.catalogo.aplicacion.mappers.ProductoMapper;
+import java.util.concurrent.atomic.AtomicReference;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class CatalogoControllerTest {
     private MockMvc mvc;
@@ -38,6 +43,38 @@ class CatalogoControllerTest {
     @Test void altaDevuelve201SinCambiarLosIdentificadores() throws Exception {
         mvc.perform(post("/api/admin/productos").contentType("application/json").content(ALTA)).andExpect(status().isCreated()).andExpect(content().string(""));
     }
+
+    @Test void altaCompletaRecorreControllerBOMapperYDAOCon201() throws Exception {
+        var guardado = new AtomicReference<Producto>();
+        var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> {
+            if (m.equals("existePorClave")) return false;
+            if (m.equals("guardar")) { guardado.set((Producto)a[0]); return null; }
+            throw new AssertionError(m);
+        }), id -> false, new ProductoMapper(), null);
+        var alta = MockMvcBuilders.standaloneSetup(new ProductoController(bo))
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+        alta.perform(post("/api/productos").contentType("application/json").content(ALTA))
+                .andExpect(status().isCreated()).andExpect(content().string(""));
+        assertNotNull(guardado.get());
+        assertEquals("P1", guardado.get().getClave());
+        assertEquals(1L, guardado.get().getSubcategoria().getCategoria().getId());
+        assertEquals(1, guardado.get().getVariantes().size());
+        assertEquals(1, guardado.get().getPrecios().size());
+        assertEquals(1, guardado.get().getImagenes().size());
+    }
+
+    @Test void datosInvalidosDan400YClaveDuplicada409SinGuardar() throws Exception {
+        var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> {
+            if (m.equals("existePorClave")) return true;
+            throw new AssertionError("No guardar datos rechazados: " + m);
+        }), id -> false, new ProductoMapper(), null);
+        var alta = MockMvcBuilders.standaloneSetup(new ProductoController(bo))
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+        alta.perform(post("/api/productos").contentType("application/json").content(ALTA))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.error").value("RECURSO_YA_EXISTE"));
+        alta.perform(post("/api/productos").contentType("application/json").content(ALTA.replace("\"minPiezas\":1", "\"minPiezas\":2")))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").value("DATOS_INVALIDOS"));
+    }
     @Test void validaDatosAnidadosYJsonMalformado() throws Exception {
         mvc.perform(post("/api/admin/productos").contentType("application/json").content(ALTA.replace("\"stock\":3", "\"stock\":-1"))).andExpect(status().isBadRequest());
         mvc.perform(post("/api/admin/productos").contentType("application/json").content("{")).andExpect(status().isBadRequest());
@@ -60,4 +97,27 @@ class CatalogoControllerTest {
                 .andExpect(status().isOk());
         assertArrayEquals(new Object[]{"Gorra & roja", "9223372036854775807", "2", "3", "PUBLICADO"}, filtrosRecibidos);
     }
-}
+    @Test void multipartSubeArchivoYGuardaUrlDelProveedor() throws Exception {
+        var guardado = new AtomicReference<Producto>();
+        var almacen = puerto(com.flystore.modulos.catalogo.aplicacion.puertos.IAlmacenImagenes.class, (m,a) -> {
+            if (m.equals("subir")) return new com.flystore.modulos.catalogo.aplicacion.modelo.ImagenAlmacenada("catalogo/test.png", "https://example.com/storage/test.png");
+            throw new AssertionError(m);
+        });
+        var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> {
+            if (m.equals("existePorClave")) return false;
+            if (m.equals("guardar")) { guardado.set((Producto)a[0]); return null; }
+            throw new AssertionError(m);
+        }), id -> false, new ProductoMapper(), almacen);
+        var alta = MockMvcBuilders.standaloneSetup(new ProductoController(bo))
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+        var metadata = new org.springframework.mock.web.MockMultipartFile("producto", "producto.json", "application/json",
+                ALTA.replace("\"imagenes\":[\"https://example.com/gorra.jpg\"],", "").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var imagen = new org.springframework.mock.web.MockMultipartFile("imagen", "foto.png", "image/png",
+                new byte[]{(byte)137,80,78,71,13,10,26,10});
+        alta.perform(multipart("/api/productos").file(metadata).file(imagen)).andExpect(status().isCreated());
+        assertEquals("https://example.com/storage/test.png", guardado.get().getImagenes().get(0).getUrlImagen());
+        alta.perform(multipart("/api/productos").file(metadata)).andExpect(status().isBadRequest());
+        alta.perform(multipart("/api/productos").file(metadata).file(new org.springframework.mock.web.MockMultipartFile(
+                "imagen", "foto.png", "image/png", new byte[]{1,2,3}))).andExpect(status().isBadRequest());
+    }}
+

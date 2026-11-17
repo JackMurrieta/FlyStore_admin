@@ -2,6 +2,7 @@ package com.flystore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.PropertySource;
 
 /**
  * Clase principal de la aplicación Spring Boot - FlyStore Backend
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author Usuario
  */
 @SpringBootApplication
+@PropertySource("classpath:multipart-defaults.properties")
 public class API {
 
     public static void main(String[] args) {

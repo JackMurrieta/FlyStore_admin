@@ -2,6 +2,7 @@ package com.flystore.infraestructura.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.web.client.RestClient;
 
@@ -10,6 +11,7 @@ import org.springframework.web.client.RestClient;
  * Fabrication - Centraliza la creación del cliente HTTP
  */
 @Configuration
+@PropertySource("classpath:supabase-storage.properties")
 @EnableConfigurationProperties(SupabaseProperties.class)
 public class RestClientConfig {
 

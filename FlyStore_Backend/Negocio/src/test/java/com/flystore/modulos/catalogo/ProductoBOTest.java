@@ -15,6 +15,15 @@ import static com.flystore.soporte.Dobles.puerto;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProductoBOTest {
+    @Test void validaProductoCompletoAntesDeConsultarDuplicados() {
+        var bo = bo(puerto(IProductoDAO.class, (m,a) -> { throw new AssertionError("No consultar el DAO con un producto inválido"); }), false);
+        var error = assertThrows(NegocioException.class, () -> bo.crearProducto(datos(
+                List.of(new VarianteDTO("M", "Rojo", -1)), datos().preciosProducto())));
+        assertEquals(TipoError.DATOS_INVALIDOS, error.getTipoError());
+        var errorPrecio = assertThrows(NegocioException.class, () -> bo.crearProducto(datos(
+                datos().variantes(), List.of(new PrecioProductoDTO("BASE", java.math.BigDecimal.ZERO, 1)))));
+        assertEquals(TipoError.DATOS_INVALIDOS, errorPrecio.getTipoError());
+    }
     @Test void buscarSinFiltrosSeRechazaAntesDeConsultarPersistencia() {
         var bo = bo(puerto(IProductoDAO.class, (m,a) -> { throw new AssertionError("No debe consultar el DAO"); }), false);
         var error = assertThrows(NegocioException.class, () -> bo.buscarProductos("   ", null, "", " ", null));
@@ -29,7 +38,7 @@ class ProductoBOTest {
         return datos(List.of(new VarianteDTO("M", "Rojo", 5)),
                 List.of(new PrecioProductoDTO("BASE", new BigDecimal("100.00"), 1)));
     }
-    private ProductoBO bo(IProductoDAO dao, boolean ventas) { return new ProductoBO(dao, id -> ventas, new ProductoMapper()); }
+    private ProductoBO bo(IProductoDAO dao, boolean ventas) { return new ProductoBO(dao, id -> ventas, new ProductoMapper(), null); }
 
     @Test void altaConservaIdsLongYMapeaTodoElAgregado() {
         var guardado = new AtomicReference<Producto>();

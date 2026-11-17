@@ -15,19 +15,21 @@ public class CatalogoBO implements ICatalogoBO {
     private final ISubcategoriaDAO subcategoriaDAO;
     private final IMarcaDAO marcaDAO;
     private final ITallaDAO tallaDAO;
+    private final IColorDAO colorDAO;
     private final CatalogoMapper catalogoMapper;
 
-    public CatalogoBO(ICategoriaDAO categoriaDAO, ISubcategoriaDAO subcategoriaDAO, IMarcaDAO marcaDAO, ITallaDAO tallaDAO, CatalogoMapper catalogoMapper) {
+    public CatalogoBO(ICategoriaDAO categoriaDAO, ISubcategoriaDAO subcategoriaDAO, IMarcaDAO marcaDAO, ITallaDAO tallaDAO, IColorDAO colorDAO, CatalogoMapper catalogoMapper) {
         this.categoriaDAO = categoriaDAO;
         this.subcategoriaDAO = subcategoriaDAO;
         this.marcaDAO = marcaDAO;
         this.tallaDAO = tallaDAO;
+        this.colorDAO = colorDAO;
         this.catalogoMapper = catalogoMapper;
     }
 
     @Override
     public FiltrosDisponiblesDTO obtenerFiltrosDisponibles() {
-        return catalogoMapper.aFiltrosDisponiblesDTO(categoriaDAO.obtenerTodas(), subcategoriaDAO.obtenerTodas(), marcaDAO.obtenerTodas());
+        return catalogoMapper.aFiltrosDisponiblesDTO(categoriaDAO.obtenerTodas(), subcategoriaDAO.obtenerTodas(), marcaDAO.obtenerTodas(), colorDAO.obtenerTodos());
     }
 
     @Override

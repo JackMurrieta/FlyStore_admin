@@ -9,18 +9,28 @@ import com.flystore.dominio.excepcion.*;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import com.flystore.modulos.catalogo.aplicacion.modelo.ArchivoImagen;
+import com.flystore.modulos.catalogo.aplicacion.modelo.ImagenAlmacenada;
+import com.flystore.modulos.catalogo.aplicacion.puertos.IAlmacenImagenes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ProductoBO implements IProductoBO {
+    private static final Logger logger = LoggerFactory.getLogger(ProductoBO.class);
 
     private final IProductoDAO productoDAO;
     private final IDetallePedidoDAO detallePedidoDAO;
     private final ProductoMapper productoMapper;
+    private final IAlmacenImagenes almacenImagenes;
 
-    public ProductoBO(IProductoDAO productoDAO, IDetallePedidoDAO detallePedidoDAO, ProductoMapper productoMapper) {
+    public ProductoBO(IProductoDAO productoDAO, IDetallePedidoDAO detallePedidoDAO, ProductoMapper productoMapper, IAlmacenImagenes almacenImagenes) {
         this.productoDAO = productoDAO;
         this.detallePedidoDAO = detallePedidoDAO;
         this.productoMapper = productoMapper;
+        this.almacenImagenes = almacenImagenes;
     }
 
     @Override
@@ -48,15 +58,61 @@ public class ProductoBO implements IProductoBO {
     @Override
     @Transactional
     public void crearProducto(CrearProductoDTO dto) {
-        validarDatosProducto(dto);
+        validarProductoCompleto(dto);
         validarProductoNoDuplicado(dto.clave());
-        validarStock(dto.variantes());
-        validarCoherenciaPrecios(dto.preciosProducto());
         try {
             productoDAO.guardar(productoMapper.aProducto(dto));
         } catch (IllegalArgumentException e) {
             throw invalido(e.getMessage());
         }
+    }
+
+    @Override
+    @Transactional
+    public void crearProductoConImagen(CrearProductoDTO dto, ArchivoImagen archivo) {
+        validarDatosProducto(dto);
+        validarStock(dto.variantes());
+        validarCoherenciaPrecios(dto.preciosProducto());
+        validarImagen(archivo);
+        validarProductoNoDuplicado(dto.clave());
+        var imagen = almacenImagenes.subir(archivo);
+        boolean transaccion = TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive();
+        if (transaccion) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCompletion(int estado) {
+                    if (estado == STATUS_ROLLED_BACK) retirarImagen(imagen);
+                    else if (estado != STATUS_COMMITTED) logger.warn("Resultado de transacción desconocido; conservar imagen {} para reconciliar", imagen.ruta());
+                }
+            });
+        }
+        try {
+            var completo = new CrearProductoDTO(dto.clave(), dto.nombre(), dto.descripcion(), dto.idCategoria(),
+                    dto.idSubcategoria(), dto.idMarca(), List.of(imagen.url()), dto.estado(), dto.variantes(), dto.preciosProducto());
+            productoDAO.guardar(productoMapper.aProducto(completo));
+        } catch (RuntimeException | Error e) {
+            // En producción también cubre errores durante el commit mediante afterCompletion.
+            if (!transaccion) retirarImagen(imagen);
+            if (e instanceof IllegalArgumentException) throw invalido(e.getMessage());
+            throw e;
+        }
+    }
+
+    private void retirarImagen(ImagenAlmacenada imagen) {
+        try { almacenImagenes.eliminar(imagen.ruta()); }
+        catch (RuntimeException e) { logger.error("No se pudo retirar la imagen {} tras fallar el alta; requiere limpieza", imagen.ruta()); }
+    }
+
+    private void validarImagen(ArchivoImagen imagen) {
+        if (imagen == null || imagen.contenido() == null || imagen.contenido().length == 0) throw invalido("Selecciona una imagen");
+        byte[] datos = imagen.contenido();
+        if (datos.length > ArchivoImagen.MAX_BYTES) throw invalido("La imagen no debe superar 5 MB");
+        boolean jpg = datos.length >= 3 && (datos[0] & 255) == 255 && (datos[1] & 255) == 216 && (datos[2] & 255) == 255;
+        boolean png = datos.length >= 8 && Arrays.equals(Arrays.copyOf(datos, 8), new byte[]{(byte)137,80,78,71,13,10,26,10});
+        boolean webp = datos.length >= 12 && datos[0] == 'R' && datos[1] == 'I' && datos[2] == 'F' && datos[3] == 'F'
+                && datos[8] == 'W' && datos[9] == 'E' && datos[10] == 'B' && datos[11] == 'P';
+        if (!(jpg && "image/jpeg".equals(imagen.tipoContenido()) || png && "image/png".equals(imagen.tipoContenido())
+                || webp && "image/webp".equals(imagen.tipoContenido()))) throw invalido("El archivo debe ser una imagen JPG, PNG o WEBP válida");
     }
 
     @Override
@@ -73,6 +129,13 @@ public class ProductoBO implements IProductoBO {
         return productoMapper.aResultadoBajaDTO(id.toString(), ventas);
     }
 
+    private void validarProductoCompleto(CrearProductoDTO dto) {
+        validarDatosProducto(dto);
+        validarStock(dto.variantes());
+        validarCoherenciaPrecios(dto.preciosProducto());
+        validarUrls(dto.imagenes());
+    }
+
     private void validarDatosProducto(CrearProductoDTO dto) {
         if (dto == null || vacio(dto.clave()) || vacio(dto.nombre()) || vacio(dto.descripcion())) {
             throw invalido("Clave, nombre y descripción son obligatorios");
@@ -83,10 +146,13 @@ public class ProductoBO implements IProductoBO {
         if (!Set.of("PUBLICADO", "BORRADOR", "INACTIVO").contains(dto.estado() == null ? "" : dto.estado())) {
             throw invalido("Estado de producto inválido");
         }
-        if (dto.imagenes() == null || dto.imagenes().isEmpty()) {
+    }
+
+    private void validarUrls(List<String> imagenes) {
+        if (imagenes == null || imagenes.isEmpty()) {
             throw invalido("El producto debe tener imágenes");
         }
-        for (var imagen : dto.imagenes()) {
+        for (var imagen : imagenes) {
             try {
                 var uri = java.net.URI.create(imagen.trim());
                 if (!("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme())) || uri.getHost() == null) {

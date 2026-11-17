@@ -6,10 +6,10 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 @Component
 public class CatalogoMapper {
-    public FiltrosDisponiblesDTO aFiltrosDisponiblesDTO(List<Categoria> categorias, List<Subcategoria> subcategorias, List<Marca> marcas) {
+    public FiltrosDisponiblesDTO aFiltrosDisponiblesDTO(List<Categoria> categorias, List<Subcategoria> subcategorias, List<Marca> marcas, List<Color> colores) {
         return new FiltrosDisponiblesDTO(categorias.stream().map(c -> new CatalogoItemDTO(c.getId().toString(), c.getNombre())).toList(),
                 subcategorias.stream().map(s -> new CatalogoItemDTO(s.getId().toString(), s.getNombre())).toList(),
-                marcas.stream().map(m -> new CatalogoItemDTO(m.getId().toString(), m.getNombre())).toList());
+                marcas.stream().map(m -> new CatalogoItemDTO(m.getId().toString(), m.getNombre())).toList(), colores.stream().map(Color::getNombreColor).distinct().toList());
     }
     public TallaDTO aTallaDTO(Talla talla) { return new TallaDTO(talla.getId().toString(), talla.getEtiqueta()); }
 }

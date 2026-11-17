@@ -12,6 +12,10 @@ public class SupabaseProperties {
     private String url;
     private String publishableKey;
     private String secretKey;
+    private String storageBucket = "productos";
+
+    public String getStorageBucket() { return storageBucket; }
+    public void setStorageBucket(String storageBucket) { this.storageBucket = storageBucket; }
 
     public String getUrl() {
         return url;

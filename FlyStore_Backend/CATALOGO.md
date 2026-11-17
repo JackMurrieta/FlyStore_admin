@@ -40,7 +40,7 @@ La búsqueda en /api/productos/buscar admite texto, idCategoria, idSubcategoria,
 
 ## Alta
 
-POST recibe application/json con este contrato:
+El formulario usa multipart con archivo; ver [configuración de Storage](STORAGE.md). Por compatibilidad, POST también recibe application/json con este contrato:
 
 ```json
 {
@@ -75,4 +75,7 @@ Se prueban reglas de alta/baja, filtros e IDs, mapeo del agregado, contratos y v
 
 La consulta del frontend está conectada en /admin/catalogo siguiendo el flujo Pantalla → hook → CatalogoModel → servicios HTTP → Controllers → BO → DAO. Se cargan productos y después filtros; la búsqueda vacía se rechaza también en presentación, sin enviar peticiones. Las respuestas antiguas no reemplazan resultados recientes.
 
-La integración de alta y baja del frontend sigue pendiente de sus propios flujos. El contrato de alta anterior usa File y pasos separados, mientras que este backend recibe el JSON completo con URLs. No se añaden carga de archivos, edición, reactivación ni endpoints de venta fuera del alcance mostrado.
+El alta del frontend está conectada: Nuevo producto → carga de filtros/tallas → captura y validación → ProductoModel.aCrearProductoDTO → ProductoService → POST /api/productos. Se envía multipart con el agregado completo en la parte JSON producto y el archivo en imagen; el backend sube a Storage y sustituye las imágenes por la URL pública antes de persistir. Se espera 201 sin cuerpo. ProductoBO valida el producto completo antes de consultar duplicados y solo después invoca al mapper y al DAO. Tras el éxito se vuelve al catálogo y se recarga la lista. Un 400 o 409 conserva el formulario para corregirlo.
+
+La integración de baja del frontend sigue pendiente de su propio flujo. La carga de archivos utiliza Supabase Storage según STORAGE.md. Edición, reactivación y endpoints de venta siguen fuera del alcance mostrado. Las pruebas HTTP del frontend usan respuestas controladas y las del backend usan puertos falsos; no se han insertado productos nuevos en la BD real del usuario durante esta implementación.
+

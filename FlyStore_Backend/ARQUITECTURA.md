@@ -24,7 +24,7 @@
 - Persistencia no depende de otro proyecto interno.
 - DTOs no depende de otro proyecto interno.
 - Negocio depende de Persistencia y DTOs.
-- Infraestructura depende de Negocio para implementar su contrato de autenticación externa.
+- Infraestructura depende de Negocio para implementar sus contratos de autenticación externa y almacenamiento de imágenes.
 - API depende de Negocio y DTOs; incorpora Infraestructura como dependencia runtime.
 
 No hay dependencia de Persistencia hacia Negocio. Las interfaces DAO se publican desde Persistencia y los BO las consumen por inyección de constructor. Los controladores de catálogo utilizan interfaces BO. Se preservó la consulta de roles de autenticación anterior en SupabaseJwtConverter y se retiró UsuarioBO, añadido durante la refactorización.
@@ -55,3 +55,6 @@ La transacción local no incluye Supabase. Un registro remoto seguido de una esc
 Las pruebas comprueban ubicación física de clases, dependencias Maven, acceso de Negocio a contratos DAO, ausencia de acceso directo de los controladores de catálogo a Persistencia, descubrimiento de componentes entre JAR, mapeos JPA, construcción del pool sin abrir conexiones, autenticación y autorización. No sustituyen la integración contra PostgreSQL y Supabase reales.
 
 El proyecto Entidades fue absorbido por Persistencia. Docker compila los cinco proyectos y empaqueta sus dependencias en el ejecutable de API. Las rutas, nombres JSON y cookies de autenticación se conservan. El catálogo administrativo está implementado según los diagramas adjuntos; venta y pedidos quedan pendientes. Los DAO de catálogo usan EntityManager directamente y no agregan repositorios, BO o servicios ajenos a esos diagramas. Los DAO y repositorios anteriores de autenticación permanecen.
+
+La subida de imágenes sigue el puerto IAlmacenImagenes de Negocio y SupabaseStorageGateway de Infraestructura. API recibe multipart y Persistencia guarda la URL. Configuración y compensación: [STORAGE.md](STORAGE.md).
+

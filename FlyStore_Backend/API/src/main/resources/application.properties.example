@@ -21,6 +21,11 @@ supabase.url=https://TU_PROYECTO.supabase.co
 # Clave publishable del proyecto; no es la contrasena de PostgreSQL.
 supabase.publishable-key=PEGA_AQUI_LA_CLAVE_PUBLISHABLE
 
+# Subida de imagenes: variables del BACKEND. Tambien pueden configurarse como valores locales aqui.
+# No usar la clave publishable como secret-key ni copiar una clave secreta al frontend.
+supabase.secret-key=${SUPABASE_SECRET_KEY:}
+supabase.storage-bucket=${SUPABASE_STORAGE_BUCKET:productos}
+
 # El backend actual valida tokens firmados con ES256.
 spring.security.oauth2.resourceserver.jwt.issuer-uri=${supabase.url}/auth/v1
 spring.security.oauth2.resourceserver.jwt.jwk-set-uri=${supabase.url}/auth/v1/.well-known/jwks.json
