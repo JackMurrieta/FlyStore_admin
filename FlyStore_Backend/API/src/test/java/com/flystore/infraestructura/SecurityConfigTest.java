@@ -62,6 +62,18 @@ class SecurityConfigTest {
         }
     }
 
+    @Test void bajaExigeSesionYRolEnAmbasRutas() throws Exception {
+        for (var ruta : new String[]{"/api/productos/7", "/api/admin/productos/7"}) {
+            mvc.perform(delete(ruta)).andExpect(status().isUnauthorized());
+            mvc.perform(delete(ruta).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_CLIENTE"))))
+                    .andExpect(status().isForbidden());
+            for (var rol : new String[]{"ROLE_ADMIN", "ROLE_EMPLEADO"}) {
+                mvc.perform(delete(ruta).with(jwt().authorities(new SimpleGrantedAuthority(rol))))
+                        .andExpect(status().isOk());
+            }
+        }
+    }
+
     @Test void cookieAccessVencidaNoImpideLlegarAlCasoDeUsoRefresh() throws Exception {
         mvc.perform(post("/api/auth/refresh").cookie(new Cookie("access_token", "vencido"),
                         new Cookie("refresh_token", "vigente")))
@@ -84,6 +96,7 @@ class SecurityConfigTest {
     static class Endpoints {
         @GetMapping({"/health", "/api/protegido", "/api/admin/prueba", "/api/productos", "/api/catalogo/filtros"})
         String get() { return "ok"; }
+        @DeleteMapping({"/api/productos/{id}", "/api/admin/productos/{id}"}) String eliminar() { return "ok"; }
         @PostMapping("/api/auth/refresh") String refresh() { return "ok"; }
     }
 }

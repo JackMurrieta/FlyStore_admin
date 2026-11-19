@@ -133,5 +133,34 @@ class CatalogoControllerTest {
             .andExpect(status().isBadRequest()).andExpect(jsonPath("$.error").value("DATOS_INVALIDOS"))
             .andExpect(jsonPath("$.message").value("Selecciona un color existente"));
     }
+
+    @Test void bajaRecorreControllerBOConsultaVentasYDAOEnOrden() throws Exception {
+        for (boolean ventas : new boolean[]{false, true}) {
+            var pasos = new java.util.ArrayList<String>();
+            var dao = puerto(IProductoDAO.class, (m,a) -> {
+                pasos.add(m);
+                if (m.equals("obtenerPorId")) return java.util.Optional.of(new Producto());
+                assertEquals(9223372036854775807L, a[0]);
+                if (m.equals("cambiarEstado")) assertEquals(com.flystore.persistencia.entidades.EstadoProducto.INACTIVO, a[1]);
+                return null;
+            });
+            var bo = new ProductoBO(dao, id -> { pasos.add("existenVentasDeProducto"); return ventas; }, new ProductoMapper(), null);
+            var api = MockMvcBuilders.standaloneSetup(new ProductoController(bo)).setControllerAdvice(new GlobalExceptionHandler()).build();
+            api.perform(delete("/api/productos/9223372036854775807"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.idProducto").value("9223372036854775807"))
+                .andExpect(jsonPath("$.tipoBaja").value(ventas ? "LOGICA" : "FISICA"));
+            assertEquals(List.of("obtenerPorId", "existenVentasDeProducto", ventas ? "cambiarEstado" : "eliminar"), pasos);
+        }
+    }
+
+    @Test void bajaRechazadaNoDevuelveExito() throws Exception {
+        var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> {
+            if (m.equals("obtenerPorId")) return java.util.Optional.of(new Producto());
+            throw new org.springframework.dao.DataIntegrityViolationException("Referencia existente");
+        }), id -> false, new ProductoMapper(), null);
+        var api = MockMvcBuilders.standaloneSetup(new ProductoController(bo)).setControllerAdvice(new GlobalExceptionHandler()).build();
+        api.perform(delete("/api/productos/7")).andExpect(status().isConflict());
+        api.perform(delete("/api/productos/no-es-id")).andExpect(status().isBadRequest());
+    }
 }
 
