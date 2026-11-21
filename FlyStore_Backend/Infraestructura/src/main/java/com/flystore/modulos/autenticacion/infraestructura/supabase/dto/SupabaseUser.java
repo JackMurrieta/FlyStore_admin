@@ -14,6 +14,8 @@ public record SupabaseUser(
         String id,
         @JsonProperty("email")
         String email,
+        @JsonProperty("new_email")
+        String newEmail,
         @JsonProperty("email_confirmed_at")
         String emailConfirmedAt,
         @JsonProperty("phone")

@@ -1,6 +1,7 @@
 package com.flystore.modulos.autenticacion.aplicacion;
 
 import com.flystore.modulos.autenticacion.aplicacion.modelo.AuthResponse;
+import com.flystore.modulos.autenticacion.aplicacion.modelo.ConfirmacionCuenta;
 import com.flystore.contratos.autenticacion.LoginRequest;
 import com.flystore.contratos.autenticacion.RegisterRequest;
 
@@ -65,4 +66,36 @@ public interface IAuthBO {
      * @return Respuesta con datos del usuario actual
      */
     AuthResponse obtenerUsuarioActual(String accessToken);
+
+    // ===== Cuenta (perfil · seguridad) =====
+
+    /** Pide cambiar el correo; el proveedor envía el enlace de confirmación. */
+    void solicitarCambioCorreo(String accessToken, String nuevoCorreo);
+
+    /**
+     * Cambia la contraseña confirmando la actual.
+     * @return sesión nueva (la verificación de la contraseña actual abre una sesión reciente).
+     */
+    AuthResponse cambiarContrasena(String accessToken, String actual, String nueva);
+
+    /** «Olvidé mi contraseña»: envía el enlace para restablecerla. */
+    void recuperarContrasena(String correo);
+
+    /** Confirma un enlace de correo (token_hash): registro, recuperación o cambio de correo. */
+    ConfirmacionCuenta confirmarCuenta(String tokenHash, String tipo);
+
+    /**
+     * Guarda la nueva contraseña tras abrir el enlace de recuperación.
+     * @param recuperacionReciente la sesión viene de un enlace de recuperación de hace pocos minutos.
+     */
+    void restablecerContrasena(String accessToken, boolean recuperacionReciente, String nueva);
+
+    /** Cierra la sesión en todos los dispositivos. */
+    void cerrarSesionGlobal(String accessToken);
+
+    /** URL para iniciar sesión con un proveedor externo (solo «google») usando PKCE. */
+    String iniciarSesionConProveedor(String proveedor, String redirigirA, String codeChallenge);
+
+    /** Completa el inicio de sesión externo: canjea el código y crea el cliente si es nuevo. */
+    AuthResponse completarSesionConProveedor(String codigo, String codeVerifier);
 }

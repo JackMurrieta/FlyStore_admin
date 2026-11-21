@@ -18,7 +18,11 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementación del gateway de Supabase Auth usando RestClient SOLID: SRP -
@@ -162,6 +166,110 @@ public class SupabaseAuthGateway implements IProveedorAutenticacion {
         }
     }
 
+    // ===== Cuenta: correo, contraseña, enlaces de correo y Google =====
+
+    /** Tipos de enlace que se aceptan al verificar un token_hash. */
+    private static final Set<String> TIPOS_TOKEN = Set.of("email", "signup", "recovery", "email_change", "invite", "magiclink");
+
+    @Override
+    public void solicitarCambioCorreo(String accessToken, String nuevoCorreo) {
+        ejecutar("solicitar cambio de correo", () -> restClient.put()
+                .uri("/auth/v1/user")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("email", nuevoCorreo))
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    @Override
+    public void actualizarContrasena(String accessToken, String nuevaContrasena) {
+        ejecutar("actualizar contraseña", () -> restClient.put()
+                .uri("/auth/v1/user")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("password", nuevaContrasena))
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    @Override
+    public void enviarRecuperacion(String correo) {
+        ejecutar("enviar recuperación", () -> restClient.post()
+                .uri("/auth/v1/recover")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("email", correo))
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    @Override
+    public SesionAutenticada verificarToken(String tokenHash, String tipo) {
+        if (!TIPOS_TOKEN.contains(tipo)) throw new NegocioException(TipoError.DATOS_INVALIDOS, "Enlace no válido");
+        return ejecutar("verificar enlace", () -> normalizarPermisivo(restClient.post()
+                .uri("/auth/v1/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("type", tipo, "token_hash", tokenHash))
+                .retrieve()
+                .body(SupabaseSession.class)));
+    }
+
+    @Override
+    public void cerrarSesionGlobal(String accessToken) {
+        ejecutar("cerrar sesión en todos los dispositivos", () -> restClient.post()
+                .uri("/auth/v1/logout?scope=global")
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    @Override
+    public String urlAutorizacion(String proveedor, String redirigirA, String codeChallenge) {
+        return supabaseUrl + "/auth/v1/authorize?provider=" + codificar(proveedor)
+                + "&redirect_to=" + codificar(redirigirA)
+                + "&code_challenge=" + codificar(codeChallenge)
+                + "&code_challenge_method=s256";
+    }
+
+    @Override
+    public SesionAutenticada canjearCodigo(String codigo, String codeVerifier) {
+        return ejecutar("canjear código de autorización", () -> normalizar(restClient.post()
+                .uri("/auth/v1/token?grant_type=pkce")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("auth_code", codigo, "code_verifier", codeVerifier))
+                .retrieve()
+                .body(SupabaseSession.class)));
+    }
+
+    private static String codificar(String valor) {
+        return URLEncoder.encode(valor, StandardCharsets.UTF_8);
+    }
+
+    /** El cambio de correo seguro puede responder sin sesión mientras falta la otra confirmación. */
+    private SesionAutenticada normalizarPermisivo(SupabaseSession sesion) {
+        if (sesion == null || sesion.accessToken() == null) return new SesionAutenticada(null, null, null, null, null);
+        return normalizar(sesion);
+    }
+
+    private void ejecutar(String operacion, Runnable llamada) {
+        ejecutar(operacion, () -> { llamada.run(); return null; });
+    }
+
+    private <T> T ejecutar(String operacion, java.util.function.Supplier<T> llamada) {
+        try {
+            return llamada.get();
+        } catch (HttpClientErrorException e) {
+            logger.warn("Error 4xx al {}: {}", operacion, e.getMessage());
+            throw mapearErrorCliente(e);
+        } catch (HttpServerErrorException e) {
+            logger.error("Error 5xx de Supabase al {}: {}", operacion, e.getMessage());
+            throw new NegocioException(TipoError.SUPABASE_NO_DISPONIBLE, "Servicio de autenticación no disponible");
+        } catch (ResourceAccessException e) {
+            logger.error("Sin conexión con Supabase al {}: {}", operacion, e.getMessage());
+            throw new NegocioException(TipoError.SUPABASE_NO_DISPONIBLE, "No se pudo conectar con el servicio de autenticación");
+        }
+    }
+
     /**
      * Mapea errores 4xx de Supabase a NegocioException con TipoError apropiado
      */
@@ -169,7 +277,19 @@ public class SupabaseAuthGateway implements IProveedorAutenticacion {
         if (user == null || user.id() == null) {
             throw new NegocioException(TipoError.SUPABASE_NO_DISPONIBLE, "Respuesta de identidad incompleta");
         }
-        return new IdentidadAutenticada(user.id(), user.email(), user.userMetadata());
+        return new IdentidadAutenticada(user.id(), user.email(), user.userMetadata(), vacioANull(user.newEmail()),
+                proveedores(user.appMetadata()));
+    }
+
+    private static List<String> proveedores(Map<String, Object> appMetadata) {
+        if (appMetadata == null) return List.of();
+        if (appMetadata.get("providers") instanceof List<?> lista)
+            return lista.stream().filter(String.class::isInstance).map(String.class::cast).toList();
+        return appMetadata.get("provider") instanceof String uno ? List.of(uno) : List.of();
+    }
+
+    private static String vacioANull(String valor) {
+        return valor == null || valor.isBlank() ? null : valor;
     }
 
     private SesionAutenticada normalizar(SupabaseSession session) {
@@ -194,8 +314,30 @@ public class SupabaseAuthGateway implements IProveedorAutenticacion {
         if (body.contains("email_not_confirmed")) {
             return new NegocioException(TipoError.EMAIL_NO_CONFIRMADO, "Debes confirmar tu email primero");
         }
-        if (body.contains("over_request_rate_limit")) {
+        if (body.contains("over_request_rate_limit") || body.contains("over_email_send_rate_limit")) {
             return new NegocioException(TipoError.DEMASIADAS_SOLICITUDES, "Demasiadas solicitudes, intenta más tarde");
+        }
+        if (body.contains("same_password")) {
+            return new NegocioException(TipoError.DATOS_INVALIDOS, "La nueva contraseña debe ser distinta de la actual");
+        }
+        if (body.contains("weak_password")) {
+            return new NegocioException(TipoError.DATOS_INVALIDOS, "La contraseña no cumple los requisitos de seguridad; usa una más larga, con letras y números");
+        }
+        if (body.contains("email_exists") || body.contains("email_address_not_authorized")) {
+            return new NegocioException(TipoError.EMAIL_YA_REGISTRADO, "Ese correo ya está registrado en otra cuenta");
+        }
+        if (body.contains("email_address_invalid")) {
+            return new NegocioException(TipoError.DATOS_INVALIDOS, "Revisa el correo; no es válido");
+        }
+        if (body.contains("otp_expired") || body.contains("otp_disabled")) {
+            return new NegocioException(TipoError.TOKEN_EXPIRADO, "El enlace venció o ya se usó. Pide uno nuevo.");
+        }
+        if (body.contains("flow_state_not_found") || body.contains("flow_state_expired") || body.contains("bad_code_verifier")
+                || body.contains("bad_oauth_callback") || body.contains("bad_oauth_state")) {
+            return new NegocioException(TipoError.TOKEN_INVALIDO, "No pudimos completar el inicio de sesión. Inténtalo de nuevo.");
+        }
+        if (body.contains("reauthentication_needed") || body.contains("reauthentication_not_valid")) {
+            return new NegocioException(TipoError.ACCESO_DENEGADO, "Por seguridad, cierra sesión, vuelve a entrar y repite el cambio.");
         }
 
         // Error genérico 4xx
