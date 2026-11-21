@@ -35,10 +35,10 @@ public class DetallePedido {
     @Column(name = "descuento_unitario")
     private BigDecimal descuentoUnitario;
 
-    @OneToMany(mappedBy = "detallePedido")
+    @OneToMany(mappedBy = "detallePedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoVarianteProducto> variantes;
 
-    @OneToMany(mappedBy = "detallePedido")
+    @OneToMany(mappedBy = "detallePedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoCodigoDescuento> codigosAplicados;
 
     public Long getId() {
@@ -47,6 +47,10 @@ public class DetallePedido {
 
     public PedidoVenta getPedidoVenta() {
         return pedidoVenta;
+    }
+
+    public void setPedidoVenta(PedidoVenta pedidoVenta) {
+        this.pedidoVenta = pedidoVenta;
     }
 
     public Integer getCantidad() {

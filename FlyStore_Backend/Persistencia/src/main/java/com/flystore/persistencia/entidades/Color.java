@@ -57,6 +57,11 @@ public class Color {
     public void setVariantesProducto(List<VarianteProducto> variantesProducto) {
         this.variantesProducto = variantesProducto;
     }
+
+    public Long getId() {
+        return id;
+    }
+
     
     
 }

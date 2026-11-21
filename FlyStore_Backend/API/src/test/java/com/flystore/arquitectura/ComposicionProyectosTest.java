@@ -24,7 +24,12 @@ class ComposicionProyectosTest {
                 Map.entry("com.flystore.modulos.autenticacion.infraestructura.supabase.SupabaseAuthGateway", "Infraestructura"),
                 Map.entry("com.flystore.infraestructura.config.RestClientConfig", "Infraestructura"),
                 Map.entry("com.flystore.modulos.autenticacion.presentacion.AuthController", "API"),
-                Map.entry("com.flystore.presentacion.seguridad.SecurityConfig", "API"));
+                Map.entry("com.flystore.presentacion.seguridad.SecurityConfig", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.presentacion.GestionarVentaController", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.presentacion.VencimientoPedidosTarea", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.aplicacion.PedidoVentaBO", "Negocio"),
+                Map.entry("com.flystore.persistencia.dao.PedidoVentaDAO", "Persistencia"),
+                Map.entry("com.flystore.modulos.gestionarventa.infraestructura.supabase.SupabaseComprobantesGateway", "Infraestructura"));
         for (var entrada : esperados.entrySet()) {
             assertTrue(componentes.contains(entrada.getKey()), entrada.getKey());
             var origen = Class.forName(entrada.getKey()).getProtectionDomain().getCodeSource()

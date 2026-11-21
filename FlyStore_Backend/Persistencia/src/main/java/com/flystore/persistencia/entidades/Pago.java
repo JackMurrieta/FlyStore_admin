@@ -38,6 +38,15 @@ public abstract class Pago {
         return id;
     }
 
+    /**
+     * Instancia real (PagoEfectivo o PagoTransferencia). PedidoVenta.pago es LAZY y Hibernate puede
+     * entregar un proxy de Pago, sobre el que instanceof falla; el proxy delega este método en el
+     * objeto real, que se devuelve a sí mismo.
+     */
+    public Pago sinProxy() {
+        return this;
+    }
+
     public BigDecimal getMonto() {
         return monto;
     }

@@ -46,6 +46,10 @@ public class CodigoDescuento {
     @OneToMany(mappedBy = "codigoDescuento")
     private List<DetallePedidoCodigoDescuento> detallesAplicados;
 
+    public Long getId() {
+        return id;
+    }
+
     public String getCodigo() {
         return codigo;
     }
