@@ -8,4 +8,10 @@ public interface ICatalogoBO {
     FiltrosDisponiblesDTO obtenerFiltrosDisponibles();
 
     List<TallaDTO> obtenerTallasPorCategoria(String idCategoria);
+
+    CatalogoRespuestaDTO obtenerCatalogoInicial();
+
+    CatalogoRespuestaDTO buscarProductos(String termino, String idCategoria);
+
+    ProductoDetalleRespuestaDTO obtenerDetalleProducto(Long idProducto);
 }

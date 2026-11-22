@@ -16,13 +16,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.http.HttpMethod;
 
 /**
- * Configuración de seguridad de Spring Security
- * SOLID: SRP - Solo configuración de seguridad
- * Backend actúa como wrapper de Supabase:
- * - Valida JWT de Supabase usando OAuth2 Resource Server
- * - Frontend NO tiene acceso directo a Supabase
+ * Configuración de seguridad de Spring Security SOLID: SRP - Solo configuración
+ * de seguridad Backend actúa como wrapper de Supabase: - Valida JWT de Supabase
+ * usando OAuth2 Resource Server - Frontend NO tiene acceso directo a Supabase
  */
 @Configuration
 @EnableWebSecurity
@@ -50,36 +49,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Deshabilitar CSRF (usamos JWT stateless)
-            .csrf(csrf -> csrf.disable())
-
-            // Configurar CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            // Stateless (sin sesiones HTTP)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-
-            // Reglas de autorización
-            .authorizeHttpRequests(auth -> auth
+                // Deshabilitar CSRF (usamos JWT stateless)
+                .csrf(csrf -> csrf.disable())
+                // Configurar CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Stateless (sin sesiones HTTP)
+                .sessionManagement(session
+                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                // Reglas de autorización
+                .authorizeHttpRequests(auth -> auth
                 // Rutas públicas
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/health", "/actuator/health").permitAll()
-
+                .requestMatchers(HttpMethod.GET, "/api/catalogo/inicial", "/api/catalogo/buscar", "/api/catalogo/producto/*").permitAll()
                 .requestMatchers("/api/admin/**", "/api/productos", "/api/productos/**", "/api/catalogo/**").hasAnyRole("ADMIN", "EMPLEADO")
                 .anyRequest().authenticated()
-            )
-
-            // 🆕 Agregar filtro que extrae JWT desde cookies HttpOnly
-            // DEBE ir ANTES de OAuth2ResourceServer para que el token esté disponible
-            .addFilterBefore(cookieJwtFilter, UsernamePasswordAuthenticationFilter.class)
-
-            // Configurar OAuth2 Resource Server para validar JWT de Supabase
-            .oauth2ResourceServer(oauth2 -> oauth2
+                )
+                // 🆕 Agregar filtro que extrae JWT desde cookies HttpOnly
+                // DEBE ir ANTES de OAuth2ResourceServer para que el token esté disponible
+                .addFilterBefore(cookieJwtFilter, UsernamePasswordAuthenticationFilter.class)
+                // Configurar OAuth2 Resource Server para validar JWT de Supabase
+                .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter))
                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-            );
+                );
 
         return http.build();
     }
