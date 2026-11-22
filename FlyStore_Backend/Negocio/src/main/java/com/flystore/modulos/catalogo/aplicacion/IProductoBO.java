@@ -10,6 +10,10 @@ public interface IProductoBO {
 
     List<ProductoCatalogoDTO> buscarProductos(String texto, String idCategoria, String idSubcategoria, String idMarca, String estado);
 
+    PaginaProductosDTO consultarPagina(String texto, String idCategoria, String idSubcategoria, String idMarca, String estado, int pagina, int tamano);
+
+    PaginaProductosDTO buscarPagina(String texto, String idCategoria, String idSubcategoria, String idMarca, String estado, int pagina, int tamano);
+
     void crearProducto(CrearProductoDTO dto);
 
     ResultadoBajaDTO darDeBajaProducto(String idProducto);

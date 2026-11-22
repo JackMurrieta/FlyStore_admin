@@ -16,12 +16,16 @@ import java.io.IOException;
 public class ProductoController {
     private final IProductoBO productoBO;
     public ProductoController(IProductoBO productoBO) { this.productoBO=productoBO; }
-    @GetMapping public ResponseEntity<List<ProductoCatalogoDTO>> obtenerProductos() { return ResponseEntity.ok(productoBO.obtenerProductos()); }
-    @GetMapping("/buscar") public ResponseEntity<List<ProductoCatalogoDTO>> buscarProductos(
+    @GetMapping public ResponseEntity<?> obtenerProductos(@RequestParam(required=false) Integer pagina, @RequestParam(required=false) Integer tamano) {
+        return ResponseEntity.ok(pagina == null && tamano == null ? productoBO.obtenerProductos()
+            : productoBO.consultarPagina(null, null, null, null, null, pagina == null ? 0 : pagina, tamano == null ? 7 : tamano));
+    }
+    @GetMapping("/buscar") public ResponseEntity<?> buscarProductos(
             @RequestParam(required=false) String texto, @RequestParam(required=false) String idCategoria,
             @RequestParam(required=false) String idSubcategoria, @RequestParam(required=false) String idMarca,
-            @RequestParam(required=false) String estado) {
-        return ResponseEntity.ok(productoBO.buscarProductos(texto, idCategoria, idSubcategoria, idMarca, estado));
+            @RequestParam(required=false) String estado, @RequestParam(required=false) Integer pagina, @RequestParam(required=false) Integer tamano) {
+        return ResponseEntity.ok(pagina == null && tamano == null ? productoBO.buscarProductos(texto, idCategoria, idSubcategoria, idMarca, estado)
+            : productoBO.buscarPagina(texto, idCategoria, idSubcategoria, idMarca, estado, pagina == null ? 0 : pagina, tamano == null ? 7 : tamano));
     }
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> crearProducto(@Valid @RequestBody CrearProductoDTO dto) { productoBO.crearProducto(dto); return ResponseEntity.status(201).build(); }

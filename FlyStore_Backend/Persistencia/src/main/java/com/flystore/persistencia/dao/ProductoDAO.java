@@ -22,6 +22,15 @@ public class ProductoDAO implements IProductoDAO {
 
     @Override
     public List<Producto> buscar(String texto, Long idCategoria, Long idSubcategoria, Long idMarca, EstadoProducto estado) {
+        return consultar(texto, idCategoria, idSubcategoria, idMarca, estado, null, null);
+    }
+
+    @Override
+    public List<Producto> buscarPagina(String texto, Long idCategoria, Long idSubcategoria, Long idMarca, EstadoProducto estado, int pagina, int tamano) {
+        return consultar(texto, idCategoria, idSubcategoria, idMarca, estado, pagina, tamano);
+    }
+
+    private List<Producto> consultar(String texto, Long idCategoria, Long idSubcategoria, Long idMarca, EstadoProducto estado, Integer pagina, Integer tamano) {
         var jpql = new StringBuilder("select p from Producto p join fetch p.subcategoria s join fetch s.categoria join fetch p.marca where 1=1");
         var params = new HashMap<String, Object>();
         if (texto != null && !texto.isBlank()) {
@@ -46,7 +55,16 @@ public class ProductoDAO implements IProductoDAO {
         }
         var query = entityManager.createQuery(jpql.append(" order by p.id").toString(), Producto.class);
         params.forEach(query::setParameter);
-        return query.getResultList();
+        if (pagina != null) query.setFirstResult(Math.multiplyExact(pagina, tamano)).setMaxResults(tamano + 1);
+        var productos = query.getResultList();
+        if (pagina != null && !productos.isEmpty()) {
+            var ids = productos.stream().map(Producto::getId).toList();
+            // Cargar cada colección por separado evita N+1 y paginar sobre joins de colecciones.
+            entityManager.createQuery("select distinct p from Producto p left join fetch p.imagenes where p.id in :ids", Producto.class).setParameter("ids", ids).getResultList();
+            entityManager.createQuery("select distinct p from Producto p left join fetch p.precios where p.id in :ids", Producto.class).setParameter("ids", ids).getResultList();
+            entityManager.createQuery("select distinct p from Producto p left join fetch p.variantes v left join fetch v.talla left join fetch v.color where p.id in :ids", Producto.class).setParameter("ids", ids).getResultList();
+        }
+        return productos;
     }
 
     @Override

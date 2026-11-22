@@ -81,3 +81,9 @@ La baja del frontend está conectada conforme al flujo aprobado: confirmación o
 
 
 La configuración local API/src/main/resources/application.properties contiene la conexión y claves del equipo; está excluida de Git y no es un archivo generado por Maven. Conservarla al limpiar target/. La plantilla application.properties.example sí se versiona.
+
+## Consulta paginada del catálogo administrativo
+
+Enviar `pagina` (desde 0) y `tamano` (1–50, predeterminado 7) a GET /api/productos o GET /api/productos/buscar. La respuesta es PaginaProductosDTO con productos, pagina, tamano y hayMas. En la búsqueda sigue siendo obligatorio al menos un filtro. Sin parámetros de paginación, ambas rutas conservan la respuesta de lista anterior.
+
+ProductoDAO pagina la consulta raíz ordenada por ID y carga las tres colecciones en consultas separadas para esos IDs. Solo se recupera una fila adicional para detectar si existe otra página, sin COUNT global ni joins paginados de colecciones. Negocio recorta esa fila antes de responder. IDs persistidos Long y públicos String. No requiere migración de tablas.

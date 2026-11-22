@@ -57,6 +57,28 @@ public class ProductoBO implements IProductoBO {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PaginaProductosDTO buscarPagina(String texto, String idCategoria, String idSubcategoria, String idMarca, String estado, int pagina, int tamano) {
+        if (vacio(texto) && vacio(idCategoria) && vacio(idSubcategoria) && vacio(idMarca) && vacio(estado))
+            throw invalido("Selecciona al menos un filtro para buscar.");
+        return consultarPagina(texto, idCategoria, idSubcategoria, idMarca, estado, pagina, tamano);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaProductosDTO consultarPagina(String texto, String idCategoria, String idSubcategoria, String idMarca, String estado, int pagina, int tamano) {
+        if (pagina < 0 || tamano < 1 || tamano > 50 || (long) pagina * tamano > Integer.MAX_VALUE)
+            throw invalido("Página o tamaño inválido; el tamaño debe estar entre 1 y 50");
+        EstadoProducto filtro = null;
+        if (!vacio(estado)) {
+            try { filtro = EstadoProducto.valueOf(estado); }
+            catch (IllegalArgumentException e) { throw invalido("Estado de producto inválido"); }
+        }
+        var encontrados = productoDAO.buscarPagina(texto, opcional(idCategoria), opcional(idSubcategoria), opcional(idMarca), filtro, pagina, tamano);
+        return new PaginaProductosDTO(encontrados.stream().limit(tamano).map(productoMapper::aProductoCatalogoDTO).toList(), pagina, tamano, encontrados.size() > tamano);
+    }
+
+    @Override
     @Transactional
     public void crearProducto(CrearProductoDTO dto) {
         validarProductoCompleto(dto);

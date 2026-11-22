@@ -6,6 +6,7 @@ import java.util.Optional;
 public interface IProductoDAO {
     List<Producto> obtenerTodos();
     List<Producto> buscar(String texto, Long idCategoria, Long idSubcategoria, Long idMarca, EstadoProducto estado);
+    List<Producto> buscarPagina(String texto, Long idCategoria, Long idSubcategoria, Long idMarca, EstadoProducto estado, int pagina, int tamano);
     Optional<Producto> obtenerPorId(Long idProducto);
     boolean existePorClave(String clave);
     void guardar(Producto producto);

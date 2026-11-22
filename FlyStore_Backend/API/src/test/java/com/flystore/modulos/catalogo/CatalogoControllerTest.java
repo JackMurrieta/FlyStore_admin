@@ -162,5 +162,22 @@ class CatalogoControllerTest {
         api.perform(delete("/api/productos/7")).andExpect(status().isConflict());
         api.perform(delete("/api/productos/no-es-id")).andExpect(status().isBadRequest());
     }
+
+    @Test void paginaValidaLimitesYConservaFiltrosConIdsLong() throws Exception {
+        var recibidos = new AtomicReference<Object[]>();
+        var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> {
+            assertEquals("buscarPagina", m); recibidos.set(a); return List.of();
+        }), id -> false, new ProductoMapper(), null);
+        var api = MockMvcBuilders.standaloneSetup(new ProductoController(bo)).setControllerAdvice(new GlobalExceptionHandler()).build();
+        api.perform(get("/api/productos/buscar").param("idCategoria", "9223372036854775807").param("estado", "STOCK_BAJO").param("pagina", "2").param("tamano", "7"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.productos").isEmpty()).andExpect(jsonPath("$.pagina").value(2));
+        assertArrayEquals(new Object[]{null, Long.MAX_VALUE, null, null, com.flystore.persistencia.entidades.EstadoProducto.STOCK_BAJO, 2, 7}, recibidos.get());
+        api.perform(get("/api/productos").param("pagina", "0").param("tamano", "7")).andExpect(status().isOk());
+        for (var tamano : new String[]{"0", "51", "-1"})
+            api.perform(get("/api/productos").param("tamano", tamano)).andExpect(status().isBadRequest());
+        api.perform(get("/api/productos").param("pagina", "-1")).andExpect(status().isBadRequest());
+        api.perform(get("/api/productos").param("pagina", "2147483647")).andExpect(status().isBadRequest());
+        api.perform(get("/api/productos/buscar").param("pagina", "0")).andExpect(status().isBadRequest());
+    }
 }
 
