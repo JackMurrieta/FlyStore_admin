@@ -74,6 +74,19 @@ class SecurityConfigTest {
         }
     }
 
+    @Test void catalogoDeLaTiendaEsPublicoAunConCookieVencida() throws Exception {
+        for (var ruta : new String[]{"/api/catalogo/caps", "/api/catalogo/essence", "/api/catalogo/productos/7"}) {
+            mvc.perform(get(ruta)).andExpect(status().isOk());
+            mvc.perform(get(ruta).cookie(new Cookie("access_token", "vencido"))).andExpect(status().isOk());
+        }
+        // Escribir en esas rutas no es público, y los filtros del alta (CU-03) siguen siendo del personal.
+        mvc.perform(post("/api/catalogo/caps")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/catalogo/filtros").cookie(new Cookie("access_token", "vencido"))).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/catalogo/categorias/2/tallas")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/catalogo/categorias/2/tallas").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_CLIENTE"))))
+                .andExpect(status().isForbidden());
+    }
+
     @Test void cookieAccessVencidaNoImpideLlegarAlCasoDeUsoRefresh() throws Exception {
         mvc.perform(post("/api/auth/refresh").cookie(new Cookie("access_token", "vencido"),
                         new Cookie("refresh_token", "vigente")))
@@ -98,5 +111,7 @@ class SecurityConfigTest {
         String get() { return "ok"; }
         @DeleteMapping({"/api/productos/{id}", "/api/admin/productos/{id}"}) String eliminar() { return "ok"; }
         @PostMapping("/api/auth/refresh") String refresh() { return "ok"; }
+        @GetMapping({"/api/catalogo/{linea}", "/api/catalogo/productos/{id}", "/api/catalogo/categorias/{id}/tallas"}) String catalogo() { return "ok"; }
+        @PostMapping("/api/catalogo/{linea}") String escribirCatalogo() { return "ok"; }
     }
 }

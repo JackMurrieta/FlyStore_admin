@@ -1,10 +1,15 @@
 package com.flystore.modulos.catalogo;
 
 import com.flystore.modulos.catalogo.aplicacion.CatalogoBO;
+import com.flystore.modulos.catalogo.aplicacion.EvaluadorStock;
+import com.flystore.modulos.catalogo.aplicacion.FiltroValidador;
+import com.flystore.modulos.catalogo.aplicacion.mappers.CatalogoBOMapper;
 import com.flystore.modulos.catalogo.aplicacion.mappers.CatalogoMapper;
+import com.flystore.persistencia.dao.interfaces.*;
 import com.flystore.persistencia.entidades.*;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import static com.flystore.soporte.Dobles.puerto;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CatalogoBOTest {
@@ -13,9 +18,11 @@ class CatalogoBOTest {
         var sub = new Subcategoria(); sub.setId(2L); sub.setNombre("Planos");
         var marca = new Marca(); marca.setId(3L); marca.setNombre("Fly");
         var rojo = new Color(); rojo.setNombreColor("Rojo");
-        var bo = new CatalogoBO(() -> List.of(categoria), () -> List.of(sub), () -> List.of(marca), id -> {
+        var bo = new CatalogoBO(puerto(ICategoriaDAO.class, (m, a) -> List.of(categoria)), () -> List.of(sub), () -> List.of(marca), id -> {
             assertEquals(1L, id); return List.of();
-        }, () -> List.of(rojo), new CatalogoMapper());
+        }, () -> List.of(rojo), puerto(IProductoDAO.class, (m, a) -> { throw new AssertionError("CU-03 no consulta productos aquí"); }),
+                puerto(IClienteDAO.class, (m, a) -> { throw new AssertionError("CU-03 no consulta clientes"); }),
+                new CatalogoMapper(), new CatalogoBOMapper(), new FiltroValidador(), new EvaluadorStock());
         assertEquals("1", bo.obtenerFiltrosDisponibles().categorias().getFirst().id());
         assertEquals("2", bo.obtenerFiltrosDisponibles().subcategorias().getFirst().id());
         assertEquals("3", bo.obtenerFiltrosDisponibles().marcas().getFirst().id());
@@ -23,4 +30,3 @@ class CatalogoBOTest {
         assertEquals(List.of(), bo.obtenerTallasPorCategoria("1"));
     }
 }
-

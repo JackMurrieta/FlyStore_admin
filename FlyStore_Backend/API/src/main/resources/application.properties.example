@@ -25,6 +25,16 @@ supabase.publishable-key=PEGA_AQUI_LA_CLAVE_PUBLISHABLE
 # No usar la clave publishable como secret-key ni copiar una clave secreta al frontend.
 supabase.secret-key=${SUPABASE_SECRET_KEY:}
 supabase.storage-bucket=${SUPABASE_STORAGE_BUCKET:productos}
+# Comprobantes de pago de CU-02: bucket PRIVADO (no marcar "Public bucket" en Supabase).
+supabase.comprobantes-bucket=${SUPABASE_COMPROBANTES_BUCKET:comprobantes}
+
+# CU-02 Gestionar venta
+# Zona horaria de la tienda: vigencia de codigos de descuento y plazo de 42 h.
+app.ventas.zona-horaria=America/Hermosillo
+# Telefono de WhatsApp de la tienda con lada de pais y sin +, ej. 526621234567. Vacio = sin enlace.
+app.ventas.whatsapp=
+# Cada cuanto se revisan los pedidos vencidos (ms).
+app.ventas.vencimiento.intervalo-ms=900000
 
 # El backend actual valida tokens firmados con ES256.
 spring.security.oauth2.resourceserver.jwt.issuer-uri=${supabase.url}/auth/v1

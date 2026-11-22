@@ -3,6 +3,7 @@ package com.flystore.presentacion.seguridad;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -66,6 +67,11 @@ public class SecurityConfig {
                 // Rutas públicas
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/health", "/actuator/health").permitAll()
+
+                // CU-03: filtros y tallas del alta de productos; van antes que las rutas públicas de la tienda
+                .requestMatchers(CatalogoPublico.RUTAS_ADMIN).hasAnyRole("ADMIN", "EMPLEADO")
+                // CU-01: catálogo de la tienda por línea y ficha de producto, sin sesión
+                .requestMatchers(HttpMethod.GET, CatalogoPublico.RUTAS).permitAll()
 
                 .requestMatchers("/api/admin/**", "/api/productos", "/api/productos/**", "/api/catalogo/**").hasAnyRole("ADMIN", "EMPLEADO")
                 .anyRequest().authenticated()

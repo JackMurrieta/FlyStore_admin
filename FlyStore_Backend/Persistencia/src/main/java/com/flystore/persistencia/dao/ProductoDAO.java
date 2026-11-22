@@ -1,5 +1,6 @@
 package com.flystore.persistencia.dao;
 
+import com.flystore.persistencia.consultas.*;
 import com.flystore.persistencia.dao.interfaces.IProductoDAO;
 import com.flystore.persistencia.entidades.*;
 import jakarta.persistence.*;
@@ -105,5 +106,83 @@ public class ProductoDAO implements IProductoDAO {
         var producto = obtenerPorId(idProducto).orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
         entityManager.remove(producto);
         entityManager.flush();
+    }
+
+    // ===== CU-01 Consultar catálogo (tienda) =====
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaProductos buscarEnTienda(FiltroCatalogo filtro, int desde, int cantidad) {
+        var consulta = new ConsultaTiendaSql(filtro);
+        long total = numero(consulta.aplicar(entityManager.createNativeQuery(consulta.contar())).getSingleResult());
+        if (total == 0 || desde >= total) return new PaginaProductos(List.of(), total);
+        var query = consulta.aplicar(entityManager.createNativeQuery(consulta.idsOrdenados()));
+        query.setFirstResult(desde);
+        query.setMaxResults(cantidad);
+        var ids = ((List<?>) query.getResultList()).stream().map(ProductoDAO::numero).toList();
+        return new PaginaProductos(ids, total);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Producto> obtenerParaTienda(List<Long> ids, boolean conVariantes) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        // Una consulta por colección: las listas (bags) no se pueden traer juntas en un solo join fetch.
+        // Todas usan el mismo contexto de persistencia, así que llenan los mismos objetos Producto.
+        var productos = entityManager.createQuery(
+                "select p from Producto p join fetch p.subcategoria s join fetch s.categoria join fetch p.marca where p.id in :ids",
+                Producto.class).setParameter("ids", ids).getResultList();
+        entityManager.createQuery("select distinct p from Producto p left join fetch p.precios where p.id in :ids", Producto.class)
+                .setParameter("ids", ids).getResultList();
+        entityManager.createQuery(
+                "select distinct p from Producto p left join fetch p.imagenes i left join fetch i.color where p.id in :ids",
+                Producto.class).setParameter("ids", ids).getResultList();
+        if (conVariantes) {
+            entityManager.createQuery(
+                    "select distinct p from Producto p left join fetch p.variantes v left join fetch v.color left join fetch v.talla t left join fetch t.tipoTalla where p.id in :ids",
+                    Producto.class).setParameter("ids", ids).getResultList();
+        }
+        var porId = new HashMap<Long, Producto>();
+        productos.forEach(p -> porId.put(p.getId(), p));
+        return ids.stream().map(porId::get).filter(Objects::nonNull).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Producto> obtenerVisibleEnTienda(Long idProducto) {
+        long visibles = numero(entityManager.createNativeQuery(ConsultaTiendaSql.esVisible())
+                .setParameter("idProducto", idProducto).getSingleResult());
+        if (visibles == 0) return Optional.empty();
+        return obtenerParaTienda(List.of(idProducto), true).stream().findFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OpcionesFiltroCatalogo obtenerOpcionesFiltro(FiltroCatalogo alcance) {
+        var consulta = new ConsultaTiendaSql(alcance);
+        var marcas = filas(consulta, consulta.conteoMarcas()).stream()
+                .map(f -> new ConteoOpcion(numero(f[0]), (String) f[1], numero(f[2]))).toList();
+        var subcategorias = filas(consulta, consulta.conteoSubcategorias()).stream()
+                .map(f -> new ConteoOpcion(numero(f[0]), (String) f[1], numero(f[2]))).toList();
+        var colores = filas(consulta, consulta.conteoColores()).stream()
+                .map(f -> new ConteoColor(numero(f[0]), (String) f[1], (String) f[2], numero(f[3]))).toList();
+        var tallas = filas(consulta, consulta.conteoTallas()).stream()
+                .map(f -> new ConteoTalla(numero(f[0]), (String) f[1], numero(f[2]), (String) f[3], (String) f[4], numero(f[5]))).toList();
+        var rango = (Object[]) consulta.aplicarAlcance(entityManager.createNativeQuery(consulta.rangoPrecio())).getSingleResult();
+        return new OpcionesFiltroCatalogo(marcas, subcategorias, colores, tallas, decimal(rango[0]), decimal(rango[1]));
+    }
+
+    private List<Object[]> filas(ConsultaTiendaSql consulta, String sql) {
+        var resultado = consulta.aplicarAlcance(entityManager.createNativeQuery(sql)).getResultList();
+        return ((List<?>) resultado).stream().map(f -> (Object[]) f).toList();
+    }
+
+    private static long numero(Object valor) {
+        return valor == null ? 0L : ((Number) valor).longValue();
+    }
+
+    private static java.math.BigDecimal decimal(Object valor) {
+        if (valor == null) return null;
+        return valor instanceof java.math.BigDecimal d ? d : new java.math.BigDecimal(valor.toString());
     }
 }
