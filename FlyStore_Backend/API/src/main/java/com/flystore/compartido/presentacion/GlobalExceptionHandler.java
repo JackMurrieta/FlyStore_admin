@@ -1,6 +1,7 @@
 package com.flystore.compartido.presentacion;
 
 import com.flystore.contratos.autenticacion.ErrorDTO;
+import com.flystore.contratos.autenticacion.ValidationErrorDTO;
 import com.flystore.dominio.excepcion.NegocioException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +45,9 @@ public class GlobalExceptionHandler {
                 401;
             case ACCESO_DENEGADO, EMAIL_NO_CONFIRMADO ->
                 403;
-            case USUARIO_NO_ENCONTRADO, RECURSO_NO_ENCONTRADO ->
+            case USUARIO_NO_ENCONTRADO, RECURSO_NO_ENCONTRADO, NO_ENCONTRADO ->
                 404;
-            case USUARIO_YA_EXISTE, EMAIL_YA_REGISTRADO, RECURSO_YA_EXISTE ->
+            case USUARIO_YA_EXISTE, EMAIL_YA_REGISTRADO, RECURSO_YA_EXISTE, CONFLICTO_DE_DATOS ->
                 409;
             case DEMASIADAS_SOLICITUDES ->
                 429;
@@ -59,27 +60,27 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Maneja errores de validación (@Valid en controllers) Retorna 400 Bad
-     * Request con los campos inválidos
+     * Maneja errores de validación (@Valid en controllers)
+     * Retorna 400 Bad Request con los campos inválidos
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ValidationErrorDTO> handleValidationException(MethodArgumentNotValidException ex) {
         logger.warn("Error de validación: {}", ex.getMessage());
 
-        Map<String, String> errors = new HashMap<>();
+        Map<String, String> fieldErrors = new HashMap<>();
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
+            fieldErrors.put(error.getField(), error.getDefaultMessage());
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "VALIDACION_FALLIDA");
-        response.put("message", "Errores de validación");
-        response.put("fields", errors);
-        response.put("timestamp", System.currentTimeMillis());
+        ValidationErrorDTO errorResponse = new ValidationErrorDTO(
+                "VALIDACION_FALLIDA",
+                "Errores de validación",
+                fieldErrors
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(response);
+                .body(errorResponse);
     }
 
     /**

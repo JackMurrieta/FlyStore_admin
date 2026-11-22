@@ -5,6 +5,7 @@ import com.flystore.contratos.autenticacion.LoginRequest;
 import com.flystore.contratos.autenticacion.RegisterRequest;
 import com.flystore.modulos.autenticacion.aplicacion.modelo.SesionAutenticada;
 import com.flystore.modulos.autenticacion.aplicacion.modelo.IdentidadAutenticada;
+import com.flystore.modulos.autenticacion.aplicacion.modelo.ConfirmacionCuenta;
 import java.util.Locale;
 import com.flystore.persistencia.entidades.Cliente;
 import com.flystore.persistencia.entidades.TipoCliente;
@@ -310,6 +311,153 @@ public class AuthBO implements IAuthBO {
             logger.error("Error al obtener usuario actual", e);
             throw new NegocioException(TipoError.TOKEN_INVALIDO, "Token de sesión inválido o expirado");
         }
+    }
+
+    // ===== Cuenta (perfil · seguridad) =====
+
+    /** Tipos de enlace de correo que confirman el registro y pueden crear al cliente. */
+    private static final java.util.Set<String> TIPOS_REGISTRO = java.util.Set.of("email", "signup", "invite", "magiclink");
+
+    @Override
+    public void solicitarCambioCorreo(String accessToken, String nuevoCorreo) {
+        var correo = nuevoCorreo.trim().toLowerCase(Locale.ROOT);
+        IdentidadAutenticada identidad = supabaseGateway.obtenerUsuario(accessToken);
+        if (correo.equalsIgnoreCase(identidad.email())) {
+            throw new NegocioException(TipoError.DATOS_INVALIDOS, "Ese ya es tu correo actual");
+        }
+        if (!identidad.tieneContrasena()) {
+            throw new NegocioException(TipoError.DATOS_INVALIDOS,
+                    "Tu cuenta entra con Google; el correo es el de tu cuenta de Google y no se cambia aquí");
+        }
+        supabaseGateway.solicitarCambioCorreo(accessToken, correo);
+        logger.info("Cambio de correo solicitado para {}", identidad.id());
+    }
+
+    @Override
+    public AuthResponse cambiarContrasena(String accessToken, String actual, String nueva) {
+        IdentidadAutenticada identidad = supabaseGateway.obtenerUsuario(accessToken);
+        if (!identidad.tieneContrasena()) {
+            throw new NegocioException(TipoError.DATOS_INVALIDOS,
+                    "Tu cuenta entra con Google, así que no tiene contraseña que cambiar");
+        }
+        if (actual.equals(nueva)) {
+            throw new NegocioException(TipoError.DATOS_INVALIDOS, "La nueva contraseña debe ser distinta de la actual");
+        }
+        SesionAutenticada verificada;
+        try {
+            verificada = supabaseGateway.login(identidad.email(), actual);
+        } catch (NegocioException e) {
+            // 400 y no 401: un 401 haría que el frontend crea que la sesión expiró.
+            if (e.getTipoError() == TipoError.CREDENCIALES_INVALIDAS)
+                throw new NegocioException(TipoError.DATOS_INVALIDOS, "La contraseña actual no es correcta");
+            throw e;
+        }
+        if (verificada.user() == null || !identidad.id().equals(verificada.user().id())) {
+            throw new NegocioException(TipoError.ACCESO_DENEGADO, "No pudimos verificar tu cuenta");
+        }
+        supabaseGateway.actualizarContrasena(verificada.accessToken(), nueva);
+        Usuario usuario = buscarUsuarioPorAuthId(UUID.fromString(identidad.id()));
+        if (usuario == null) throw new NegocioException(TipoError.USUARIO_NO_ENCONTRADO, "Usuario no registrado en el sistema");
+        logger.info("Contraseña actualizada para {}", identidad.id());
+        return respuestaSesion(verificada, usuario);
+    }
+
+    @Override
+    public void recuperarContrasena(String correo) {
+        // El proveedor responde igual exista o no el correo: no se revela quién tiene cuenta.
+        supabaseGateway.enviarRecuperacion(correo.trim().toLowerCase(Locale.ROOT));
+    }
+
+    @Override
+    @Transactional
+    public ConfirmacionCuenta confirmarCuenta(String tokenHash, String tipo) {
+        SesionAutenticada sesion = supabaseGateway.verificarToken(tokenHash, tipo);
+        if (sesion.accessToken() == null || sesion.user() == null) {
+            return new ConfirmacionCuenta(tipo, null,
+                    "Confirmamos este correo. Abre también el enlace que enviamos al otro correo para terminar el cambio.");
+        }
+        IdentidadAutenticada identidad = sesion.user();
+        Usuario usuario = TIPOS_REGISTRO.contains(tipo)
+                ? obtenerOCrearCliente(identidad)
+                : buscarUsuarioPorAuthId(UUID.fromString(identidad.id()));
+        if (usuario == null) throw new NegocioException(TipoError.USUARIO_NO_ENCONTRADO, "Usuario no registrado en el sistema");
+
+        String mensaje;
+        switch (tipo) {
+            case "recovery" -> mensaje = "Escribe tu nueva contraseña.";
+            case "email_change" -> {
+                sincronizarCorreo(usuario, identidad.email());
+                mensaje = "Listo, tu correo ahora es " + identidad.email() + ".";
+            }
+            default -> mensaje = "Tu correo quedó confirmado. ¡Bienvenido a FlyStore!";
+        }
+        return new ConfirmacionCuenta(tipo, respuestaSesion(sesion, usuario), mensaje);
+    }
+
+    @Override
+    public void restablecerContrasena(String accessToken, boolean recuperacionReciente, String nueva) {
+        if (!recuperacionReciente) {
+            throw new NegocioException(TipoError.ACCESO_DENEGADO,
+                    "El enlace para restablecer tu contraseña venció. Pide uno nuevo.");
+        }
+        supabaseGateway.actualizarContrasena(accessToken, nueva);
+    }
+
+    @Override
+    public void cerrarSesionGlobal(String accessToken) {
+        supabaseGateway.cerrarSesionGlobal(accessToken);
+    }
+
+    @Override
+    public String iniciarSesionConProveedor(String proveedor, String redirigirA, String codeChallenge) {
+        if (!"google".equals(proveedor)) throw new NegocioException(TipoError.DATOS_INVALIDOS, "Proveedor no disponible");
+        return supabaseGateway.urlAutorizacion(proveedor, redirigirA, codeChallenge);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse completarSesionConProveedor(String codigo, String codeVerifier) {
+        SesionAutenticada sesion = supabaseGateway.canjearCodigo(codigo, codeVerifier);
+        if (sesion.user() == null) throw new NegocioException(TipoError.TOKEN_INVALIDO, "No pudimos completar el inicio de sesión");
+        return respuestaSesion(sesion, obtenerOCrearCliente(sesion.user()));
+    }
+
+    /**
+     * Usuario local de la identidad; si no existe, crea un Cliente BASE con lo que trae el proveedor
+     * (registro por correo: nombre, apellidos, teléfono y tipo; Google: nombre completo).
+     */
+    private Usuario obtenerOCrearCliente(IdentidadAutenticada identidad) {
+        UUID authId = UUID.fromString(identidad.id());
+        Usuario existente = buscarUsuarioPorAuthId(authId);
+        if (existente != null) return existente;
+
+        Map<String, Object> metadata = identidad.userMetadata();
+        String nombreCompleto = texto(metadata, "full_name", texto(metadata, "name", ""));
+        int espacio = nombreCompleto.indexOf(' ');
+        String nombre = texto(metadata, "nombre", texto(metadata, "given_name",
+                espacio > 0 ? nombreCompleto.substring(0, espacio) : nombreCompleto));
+        String apellidos = texto(metadata, "apellidos", texto(metadata, "family_name",
+                espacio > 0 ? nombreCompleto.substring(espacio + 1) : ""));
+        if (nombre.isBlank() && identidad.email() != null) nombre = identidad.email().split("@")[0];
+        String telefono = texto(metadata, "telefono", "");
+
+        logger.info("Creando cliente para identidad nueva {}", authId);
+        return crearClienteEntidad(authId, new RegisterRequest(nombre, apellidos, identidad.email(), "",
+                telefono.isBlank() ? null : telefono, texto(metadata, "tipo_cliente", "BASE")));
+    }
+
+    private static String texto(Map<String, Object> metadata, String clave, String porDefecto) {
+        Object valor = metadata.get(clave);
+        return valor instanceof String s && !s.isBlank() ? s.trim() : porDefecto;
+    }
+
+    /** El correo de Supabase manda: tras confirmar el cambio se copia al usuario local. */
+    private void sincronizarCorreo(Usuario usuario, String correo) {
+        if (correo == null || correo.equalsIgnoreCase(usuario.getEmail())) return;
+        usuario.setEmail(correo);
+        if (usuario instanceof Cliente c) clienteDAO.save(c);
+        else if (usuario instanceof Empleado e) empleadoDAO.save(e);
+        else if (usuario instanceof Admin a) adminDAO.save(a);
     }
 
     private AuthResponse respuestaSesion(SesionAutenticada sesion, Usuario usuario) {

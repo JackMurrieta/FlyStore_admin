@@ -3,6 +3,7 @@ package com.flystore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Clase principal de la aplicación Spring Boot - FlyStore Backend
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.PropertySource;
  * @author Usuario
  */
 @SpringBootApplication
+@EnableScheduling
 @PropertySource("classpath:multipart-defaults.properties")
 public class API {
 

@@ -22,11 +22,13 @@ public enum TipoError {
     // 404 Not Found
     USUARIO_NO_ENCONTRADO,
     RECURSO_NO_ENCONTRADO,
+    NO_ENCONTRADO,
 
     // 409 Conflict
     USUARIO_YA_EXISTE,
     EMAIL_YA_REGISTRADO,
     RECURSO_YA_EXISTE,
+    CONFLICTO_DE_DATOS,
 
     // 429 Too Many Requests
     DEMASIADAS_SOLICITUDES,
@@ -36,6 +38,6 @@ public enum TipoError {
 
     // 503 Service Unavailable
     SERVICIO_NO_DISPONIBLE,
-    SUPABASE_NO_DISPONIBLE;
+    SUPABASE_NO_DISPONIBLE
 
 }

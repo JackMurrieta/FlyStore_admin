@@ -18,13 +18,26 @@ class ComposicionProyectosTest {
                 Map.entry("com.flystore.persistencia.dao.ProductoDAO", "Persistencia"),
                 Map.entry("com.flystore.modulos.catalogo.presentacion.ProductoController", "API"),
                 Map.entry("com.flystore.modulos.catalogo.presentacion.CatalogoController", "API"),
+                Map.entry("com.flystore.modulos.catalogo.presentacion.ConsultarCatalogoController", "API"),
+                Map.entry("com.flystore.compartido.presentacion.SesionOpcional", "API"),
+                Map.entry("com.flystore.modulos.catalogo.aplicacion.mappers.CatalogoBOMapper", "Negocio"),
+                Map.entry("com.flystore.modulos.catalogo.aplicacion.FiltroValidador", "Negocio"),
+                Map.entry("com.flystore.modulos.catalogo.aplicacion.EvaluadorStock", "Negocio"),
                 Map.entry("com.flystore.modulos.autenticacion.aplicacion.AuthBO", "Negocio"),
                 Map.entry("com.flystore.persistencia.conexion.ConexionBD", "Persistencia"),
                 Map.entry("com.flystore.persistencia.dao.ClienteDAO", "Persistencia"),
                 Map.entry("com.flystore.modulos.autenticacion.infraestructura.supabase.SupabaseAuthGateway", "Infraestructura"),
                 Map.entry("com.flystore.infraestructura.config.RestClientConfig", "Infraestructura"),
                 Map.entry("com.flystore.modulos.autenticacion.presentacion.AuthController", "API"),
-                Map.entry("com.flystore.presentacion.seguridad.SecurityConfig", "API"));
+                Map.entry("com.flystore.presentacion.seguridad.SecurityConfig", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.presentacion.GestionarVentaController", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.presentacion.VencimientoPedidosTarea", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.aplicacion.PedidoVentaBO", "Negocio"),
+                Map.entry("com.flystore.persistencia.dao.PedidoVentaDAO", "Persistencia"),
+                Map.entry("com.flystore.modulos.gestionarventa.infraestructura.supabase.SupabaseComprobantesGateway", "Infraestructura"),
+                Map.entry("com.flystore.modulos.perfil.aplicacion.PerfilBO", "Negocio"),
+                Map.entry("com.flystore.modulos.perfil.aplicacion.mappers.PerfilMapper", "Negocio"),
+                Map.entry("com.flystore.modulos.perfil.presentacion.PerfilController", "API"));
         for (var entrada : esperados.entrySet()) {
             assertTrue(componentes.contains(entrada.getKey()), entrada.getKey());
             var origen = Class.forName(entrada.getKey()).getProtectionDomain().getCodeSource()

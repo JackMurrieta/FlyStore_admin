@@ -21,6 +21,9 @@ public class CookieUtils {
 
     private static final String ACCESS_TOKEN_COOKIE = "access_token";
     private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
+    /** Verificador PKCE y ruta de regreso mientras el usuario está en la pantalla de Google. */
+    private static final String OAUTH_COOKIE = "oauth_pkce";
+    private static final String OAUTH_PATH = "/api/auth/google";
 
     @Value("${app.cookie.domain:}")
     private String cookieDomain;
@@ -101,6 +104,39 @@ public class CookieUtils {
     public void clearAllAuthCookies(HttpServletResponse response) {
         clearAccessTokenCookie(response);
         clearRefreshTokenCookie(response);
+    }
+
+    /**
+     * Guarda el verificador PKCE durante el inicio de sesión con Google (10 minutos).
+     * SameSite=Lax: la vuelta desde Supabase es una navegación entre sitios y una cookie
+     * Strict no llegaría al callback.
+     */
+    public void setOAuthCookie(HttpServletResponse response, String valor) {
+        ResponseCookie cookie = ResponseCookie.from(OAUTH_COOKIE, valor)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path(OAUTH_PATH)
+                .maxAge(600)
+                .domain(cookieDomain.isEmpty() ? null : cookieDomain)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    public Optional<String> getOAuthCookie(HttpServletRequest request) {
+        return getCookieValue(request, OAUTH_COOKIE);
+    }
+
+    public void clearOAuthCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(OAUTH_COOKIE, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path(OAUTH_PATH)
+                .maxAge(0)
+                .domain(cookieDomain.isEmpty() ? null : cookieDomain)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     /**

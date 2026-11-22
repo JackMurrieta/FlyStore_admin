@@ -11,6 +11,15 @@ import com.flystore.contratos.autenticacion.TipoClienteResponse;
 import com.flystore.contratos.autenticacion.UserInfoResponse;
 import com.flystore.modulos.autenticacion.aplicacion.IAuthBO;
 import com.flystore.compartido.presentacion.CookieUtils;
+import com.flystore.compartido.presentacion.Pkce;
+import com.flystore.contratos.autenticacion.ConfirmacionCuentaResponse;
+import com.flystore.contratos.autenticacion.ConfirmarCuentaRequest;
+import com.flystore.contratos.autenticacion.RecuperarContrasenaRequest;
+import com.flystore.contratos.perfil.MensajeDTO;
+import com.flystore.modulos.autenticacion.aplicacion.modelo.ConfirmacionCuenta;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -41,6 +50,9 @@ public class AuthController {
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
+
+    @Value("${app.backend-url:http://localhost:8080}")
+    private String backendUrl;
 
     // SOLID: Inyección por CONSTRUCTOR (no @Autowired en campos)
     public AuthController(IAuthBO authBO, CookieUtils cookieUtils) {
@@ -227,6 +239,93 @@ public class AuthController {
         } catch (Exception e) {
             logger.error("Error al procesar callback: {}", e.getMessage());
             response.sendRedirect(frontendUrl + "?error=callback_failed");
+        }
+    }
+
+    // ===== Cuenta: recuperar contraseña, enlaces de correo, sesión global y Google =====
+
+    /**
+     * POST /api/auth/recuperar-contrasena «Olvidé mi contraseña». Responde 202 aunque el correo
+     * no tenga cuenta, para no revelar quién está registrado.
+     */
+    @PostMapping("/recuperar-contrasena")
+    public ResponseEntity<MensajeDTO> recuperarContrasena(@Valid @RequestBody RecuperarContrasenaRequest request) {
+        authBO.recuperarContrasena(request.correo());
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new MensajeDTO(
+                "Si hay una cuenta con ese correo, te enviamos un enlace para restablecer tu contraseña. Revisa también la carpeta de spam."));
+    }
+
+    /**
+     * POST /api/auth/confirmar Recibe el token_hash del enlace del correo (la página
+     * /auth/confirmar del front lo reenvía), lo verifica con Supabase y abre la sesión en cookies.
+     */
+    @PostMapping("/confirmar")
+    public ResponseEntity<ConfirmacionCuentaResponse> confirmar(@Valid @RequestBody ConfirmarCuentaRequest request,
+                                                                HttpServletResponse response) {
+        logger.info("POST /api/auth/confirmar - tipo: {}", request.tipo());
+        ConfirmacionCuenta confirmacion = authBO.confirmarCuenta(request.tokenHash(), request.tipo());
+        UserInfoResponse usuario = null;
+        if (confirmacion.sesion() != null) {
+            establecerSesion(response, confirmacion.sesion());
+            usuario = mapearUsuario(confirmacion.sesion());
+        }
+        return ResponseEntity.ok(new ConfirmacionCuentaResponse(confirmacion.tipo(), confirmacion.mensaje(), usuario));
+    }
+
+    /** POST /api/auth/cerrar-sesion-global Cierra la sesión en todos los dispositivos y borra las cookies. */
+    @PostMapping("/cerrar-sesion-global")
+    public ResponseEntity<Void> cerrarSesionGlobal(HttpServletRequest request, HttpServletResponse response) {
+        String accessToken = cookieUtils.getAccessTokenFromCookies(request)
+                .orElseThrow(() -> new NegocioException(TipoError.TOKEN_INVALIDO, "No se encontró sesión activa"));
+        authBO.cerrarSesionGlobal(accessToken);
+        cookieUtils.clearAllAuthCookies(response);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /api/auth/google?redirigir=/ruta Inicia sesión con Google (PKCE). Guarda el verificador en
+     * una cookie HttpOnly y redirige a Supabase, que manda al usuario a Google.
+     */
+    @GetMapping("/google")
+    public void google(@RequestParam(value = "redirigir", required = false) String redirigir,
+                       HttpServletResponse response) throws Exception {
+        String verificador = Pkce.generarVerificador();
+        String ruta = Pkce.rutaSegura(redirigir);
+        cookieUtils.setOAuthCookie(response, verificador + "." + Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(ruta.getBytes(StandardCharsets.UTF_8)));
+        response.sendRedirect(authBO.iniciarSesionConProveedor("google", backendUrl + "/api/auth/google/callback",
+                Pkce.reto(verificador)));
+    }
+
+    /**
+     * GET /api/auth/google/callback?code=… Supabase regresa aquí después de Google. Canjea el código
+     * con el verificador, crea el cliente si es nuevo, abre la sesión y regresa al frontend.
+     */
+    @GetMapping("/google/callback")
+    public void googleCallback(@RequestParam(value = "code", required = false) String codigo,
+                               @RequestParam(value = "error", required = false) String error,
+                               HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String cookie = cookieUtils.getOAuthCookie(request).orElse("");
+        cookieUtils.clearOAuthCookie(response);
+        int punto = cookie.indexOf('.');
+        if (error != null || codigo == null || codigo.isBlank() || punto <= 0) {
+            logger.warn("Callback de Google sin código o sin verificador (error: {})", error);
+            response.sendRedirect(frontendUrl + "/iniciar-sesion?error=google");
+            return;
+        }
+        String ruta;
+        try {
+            ruta = Pkce.rutaSegura(new String(Base64.getUrlDecoder().decode(cookie.substring(punto + 1)), StandardCharsets.UTF_8));
+        } catch (IllegalArgumentException e) {
+            ruta = "/";
+        }
+        try {
+            AuthResponse sesion = authBO.completarSesionConProveedor(codigo, cookie.substring(0, punto));
+            establecerSesion(response, sesion);
+            response.sendRedirect(frontendUrl + "/auth/callback?redirigir=" + URLEncoder.encode(ruta, StandardCharsets.UTF_8));
+        } catch (NegocioException e) {
+            logger.warn("No se pudo completar el inicio de sesión con Google: {}", e.getMessage());
+            response.sendRedirect(frontendUrl + "/iniciar-sesion?error=google");
         }
     }
 

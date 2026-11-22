@@ -48,4 +48,35 @@ public interface IProveedorAutenticacion {
      * @return Usuario de Supabase con información del usuario
      */
     IdentidadAutenticada obtenerUsuario(String accessToken);
+
+    /**
+     * Pide cambiar el correo de la cuenta. El proveedor envía un enlace de confirmación;
+     * el correo cambia hasta que se confirma.
+     */
+    void solicitarCambioCorreo(String accessToken, String nuevoCorreo);
+
+    /** Cambia la contraseña de la cuenta dueña del token (el token debe ser reciente). */
+    void actualizarContrasena(String accessToken, String nuevaContrasena);
+
+    /** Envía el correo para restablecer la contraseña. No revela si el correo existe. */
+    void enviarRecuperacion(String correo);
+
+    /**
+     * Verifica el token_hash de un enlace de correo (registro, recuperación o cambio de correo).
+     * @return sesión abierta por el enlace; sin accessToken si el proveedor espera otra confirmación.
+     */
+    SesionAutenticada verificarToken(String tokenHash, String tipo);
+
+    /** Cierra todas las sesiones de la cuenta, en todos los dispositivos. */
+    void cerrarSesionGlobal(String accessToken);
+
+    /**
+     * URL para iniciar sesión con un proveedor externo (Google) usando PKCE.
+     * @param redirigirA    URL del backend que recibirá el código.
+     * @param codeChallenge reto S256 del code_verifier que guarda el backend.
+     */
+    String urlAutorizacion(String proveedor, String redirigirA, String codeChallenge);
+
+    /** Canjea el código de autorización (PKCE) por una sesión. */
+    SesionAutenticada canjearCodigo(String codigo, String codeVerifier);
 }

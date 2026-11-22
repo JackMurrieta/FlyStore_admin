@@ -32,6 +32,10 @@ public class DetallePedidoVarianteProducto {
         return detallePedido;
     }
 
+    public void setDetallePedido(DetallePedido detallePedido) {
+        this.detallePedido = detallePedido;
+    }
+
     public VarianteProducto getVarianteProducto() {
         return varianteProducto;
     }
@@ -43,6 +47,12 @@ public class DetallePedidoVarianteProducto {
     public void setCantidadEnCombo(Integer cantidadEnCombo) {
         this.cantidadEnCombo = cantidadEnCombo;
     }
+
+    public void setVarianteProducto(VarianteProducto varianteProducto) {
+        this.varianteProducto = varianteProducto;
+    }
+    
+    
     
     
 }

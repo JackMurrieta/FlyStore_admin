@@ -1,6 +1,7 @@
 package com.flystore.persistencia.entidades;
 
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
 
 /**
  * Entidad PagoTransferencia - Pago por transferencia bancaria
@@ -14,6 +15,18 @@ public class PagoTransferencia extends Pago {
 
     @Column(name = "numero_referencia")
     private String numeroReferencia;
+
+    /** Momento en que llegó el comprobante; ordena la revisión de pagos (FIFO). */
+    @Column(name = "fecha_hora_comprobante")
+    private OffsetDateTime fechaHoraComprobante;
+
+    public OffsetDateTime getFechaHoraComprobante() {
+        return fechaHoraComprobante;
+    }
+
+    public void setFechaHoraComprobante(OffsetDateTime fechaHoraComprobante) {
+        this.fechaHoraComprobante = fechaHoraComprobante;
+    }
 
     public String getComprobantePagoUrl() {
         return comprobantePagoUrl;

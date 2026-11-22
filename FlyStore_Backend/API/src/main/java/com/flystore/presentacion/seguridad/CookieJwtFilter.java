@@ -78,6 +78,8 @@ public class CookieJwtFilter extends OncePerRequestFilter {
         // Estos endpoints no necesitan JWT en el request (lo generan/reciben)
         // Los casos de uso de autenticación validan sus propios tokens. Un access
         // token vencido no debe impedir renovar la sesión con el refresh token.
-        return path.startsWith("/api/auth/");
+        // El catálogo de la tienda es público: un access token vencido no debe responder 401.
+        // Ahí la sesión es opcional y la lee SesionOpcional (precio por tipo de cliente).
+        return path.startsWith("/api/auth/") || CatalogoPublico.esPublica(request);
     }
 }

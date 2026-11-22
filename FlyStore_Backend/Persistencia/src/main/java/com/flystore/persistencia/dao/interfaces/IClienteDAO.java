@@ -1,6 +1,7 @@
 package com.flystore.persistencia.dao.interfaces;
 
 import com.flystore.persistencia.entidades.Cliente;
+import com.flystore.persistencia.entidades.DatosEntrega;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -25,4 +26,20 @@ public interface IClienteDAO {
      * @return Cliente guardado
      */
     Cliente save(Cliente cliente);
+
+    /**
+     * Obtiene un cliente por su ID interno
+     * @param id ID del cliente
+     * @return Optional con el cliente si existe
+     */
+    Optional<Cliente> obtenerPorId(Long id);
+
+    /**
+     * Obtiene el cliente con bloqueo de escritura hasta el fin de la transacción.
+     * Serializa la creación del carrito del mismo cliente.
+     */
+    Optional<Cliente> bloquearPorId(Long id);
+
+    /** Persiste unos datos de entrega nuevos del cliente. */
+    void guardarDatosEntrega(DatosEntrega datosEntrega);
 }
