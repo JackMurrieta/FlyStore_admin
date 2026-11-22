@@ -1,0 +1,24 @@
+-- ============================================================
+-- SCRIPT DE INSERCIÓN: MARCAS DE FLYCAPS
+-- ============================================================
+
+INSERT INTO public.marcas (nombre) VALUES
+  ('New Era'),
+  ('Big Boss'),
+  ('ThirtyOne Hats'),
+  ('Gallo Fino'),
+  ('Barbas Hats'),
+  ('INNEDIT'),
+  ('Rude Awakenings'),
+  ('Dandy Hats'),
+  ('Báez');
+
+  -- ============================================================
+-- SCRIPT DE INSERCIÓN: CATEGORÍAS PRINCIPALES
+-- ============================================================
+
+INSERT INTO public.categorias (nombre) VALUES
+  ('FlyCaps'),
+  ('FlyClothes'),
+  ('FlyEssence'),
+  ('FlyShoes');
