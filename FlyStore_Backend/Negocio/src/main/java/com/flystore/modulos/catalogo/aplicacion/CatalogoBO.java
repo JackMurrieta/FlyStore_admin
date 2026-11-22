@@ -82,7 +82,27 @@ public class CatalogoBO implements ICatalogoBO {
         var sugerencias = resultado.total() == 0 && filtro.tieneTexto() && pagina == 0
                 ? sugerencias(filtro, tipoPrecio) : List.<ProductoTarjetaDTO>of();
         return catalogoBOMapper.aCatalogoRespuestaDTO(categoria, productos, opciones, pagina, TAMANO_PAGINA,
-                resultado.total(), tipoPrecio, sugerencias);
+                resultado.total(), tipoPrecio, sugerencias, List.of());
+    }
+
+    @Override
+    public CatalogoRespuestaDTO buscar(String linea, FiltrosCatalogoPeticionDTO filtros, UUID authId) {
+        var peticion = filtros == null ? FiltrosCatalogoPeticionDTO.vacio() : filtros;
+        filtroValidador.validar(peticion);
+        if (filtroValidador.terminos(peticion.texto()).isEmpty())
+            throw new NegocioException(TipoError.DATOS_INVALIDOS, "Escribe un nombre, modelo o marca para buscar");
+        var categoria = linea == null || linea.isBlank() ? null : obtenerLinea(linea);
+        var tipoPrecio = tipoPrecioDelCliente(authId);
+        int pagina = filtroValidador.validarPagina(peticion.pagina());
+        var filtro = aFiltroCatalogo(categoria == null ? null : categoria.getId(), peticion, tipoPrecio);
+
+        var resultado = productoDAO.buscarEnTienda(filtro, pagina * TAMANO_PAGINA, TAMANO_PAGINA);
+        var productos = tarjetas(resultado, tipoPrecio);
+        var opciones = catalogoBOMapper.aOpcionesFiltroRespuestaDTO(productoDAO.obtenerOpcionesFiltro(filtro.soloLinea()));
+        var lineas = productoDAO.contarPorLinea(filtro.soloTexto());
+        var sugerencias = resultado.total() == 0 && pagina == 0 ? sugerencias(filtro, tipoPrecio) : List.<ProductoTarjetaDTO>of();
+        return catalogoBOMapper.aCatalogoRespuestaDTO(categoria, productos, opciones, pagina, TAMANO_PAGINA,
+                resultado.total(), tipoPrecio, sugerencias, lineas);
     }
 
     @Override
@@ -164,8 +184,10 @@ public class CatalogoBO implements ICatalogoBO {
     }
 
     private List<ProductoTarjetaDTO> tarjetas(PaginaProductos pagina, TipoPrecio tipoPrecio) {
-        return productoDAO.obtenerParaTienda(pagina.ids(), false).stream()
-                .map(p -> catalogoBOMapper.aProductoTarjetaDTO(p, precioReferencia(nivelesPrecio(p), tipoPrecio).orElse(null)))
+        // Con variantes: la tarjeta muestra los colores con existencia y la foto de cada uno.
+        return productoDAO.obtenerParaTienda(pagina.ids(), true).stream()
+                .map(p -> catalogoBOMapper.aProductoTarjetaDTO(p, precioReferencia(nivelesPrecio(p), tipoPrecio).orElse(null),
+                        evaluadorStock::existencia))
                 .toList();
     }
 }

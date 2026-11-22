@@ -161,7 +161,7 @@ public class ProductoDAO implements IProductoDAO {
     public OpcionesFiltroCatalogo obtenerOpcionesFiltro(FiltroCatalogo alcance) {
         var consulta = new ConsultaTiendaSql(alcance);
         var marcas = filas(consulta, consulta.conteoMarcas()).stream()
-                .map(f -> new ConteoOpcion(numero(f[0]), (String) f[1], numero(f[2]))).toList();
+                .map(f -> new ConteoMarca(numero(f[0]), (String) f[1], (String) f[2], numero(f[3]))).toList();
         var subcategorias = filas(consulta, consulta.conteoSubcategorias()).stream()
                 .map(f -> new ConteoOpcion(numero(f[0]), (String) f[1], numero(f[2]))).toList();
         var colores = filas(consulta, consulta.conteoColores()).stream()
@@ -170,6 +170,14 @@ public class ProductoDAO implements IProductoDAO {
                 .map(f -> new ConteoTalla(numero(f[0]), (String) f[1], numero(f[2]), (String) f[3], (String) f[4], numero(f[5]))).toList();
         var rango = (Object[]) consulta.aplicarAlcance(entityManager.createNativeQuery(consulta.rangoPrecio())).getSingleResult();
         return new OpcionesFiltroCatalogo(marcas, subcategorias, colores, tallas, decimal(rango[0]), decimal(rango[1]));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ConteoOpcion> contarPorLinea(FiltroCatalogo alcance) {
+        var consulta = new ConsultaTiendaSql(alcance);
+        return filas(consulta, consulta.conteoLineas()).stream()
+                .map(f -> new ConteoOpcion(numero(f[0]), f[1] == null ? null : ((String) f[1]).trim(), numero(f[2]))).toList();
     }
 
     private List<Object[]> filas(ConsultaTiendaSql consulta, String sql) {

@@ -23,6 +23,12 @@ public interface ICatalogoBO {
      */
     CatalogoRespuestaDTO consultarLinea(String linea, FiltrosCatalogoPeticionDTO filtros, UUID authId);
 
+    /**
+     * Búsqueda en toda la tienda (S1). {@code linea} opcional acota a una línea; la respuesta trae cuántos
+     * resultados hay en cada línea. El texto es obligatorio (A1).
+     */
+    CatalogoRespuestaDTO buscar(String linea, FiltrosCatalogoPeticionDTO filtros, UUID authId);
+
     /** Ficha de un producto visible con sus variantes (el id de variante es el que usa «Agregar al carrito»). */
     ProductoDetalleRespuestaDTO obtenerProducto(String idProducto, UUID authId);
 }

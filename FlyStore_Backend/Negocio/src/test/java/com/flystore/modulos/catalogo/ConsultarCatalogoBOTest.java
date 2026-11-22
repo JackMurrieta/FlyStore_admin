@@ -29,6 +29,7 @@ class ConsultarCatalogoBOTest {
     private final Map<Long, Producto> productos = new HashMap<>();
     private final Deque<PaginaProductos> paginas = new ArrayDeque<>();
     private Optional<Producto> visible = Optional.empty();
+    private final List<FiltroCatalogo> contados = new ArrayList<>();
     private boolean consultoBase;
 
     // ===== Línea, precio por tipo de cliente y página =====
@@ -132,6 +133,7 @@ class ConsultarCatalogoBOTest {
 
         assertTrue(consultas.get(0).terminos().isEmpty());
         assertEquals("New Era", opciones.marcas().getFirst().nombre());
+        assertEquals("https://logos/new-era.png", opciones.marcas().getFirst().logoUrl(), "el mosaico de marcas usa el logo");
         assertEquals(96, opciones.marcas().getFirst().cantidad());
         assertEquals("#111111", opciones.colores().getFirst().hex());
         assertEquals(2, opciones.tiposTalla().size());
@@ -148,6 +150,60 @@ class ConsultarCatalogoBOTest {
         var tallas = new ArrayList<>(List.of("Unitalla", "XL", "7 1/8", "S-M", "22.5", "M", "6 7/8", "Ajustable", "L-XL"));
         tallas.sort(CatalogoBOMapper.ORDEN_TALLAS);
         assertEquals(List.of("6 7/8", "7 1/8", "22.5", "S-M", "M", "L-XL", "XL", "Ajustable", "Unitalla"), tallas);
+    }
+
+    @Test void tarjetaTraeLosColoresConExistenciaConSuFoto() {
+        var gorra = gorra(4L);
+        var negro = color(2L, "Negro", "#111111");
+        var gris = color(3L, "Gris", "#777777");
+        var rojo = color(4L, "Rojo", "#aa0000");
+        gorra.setVariantes(new ArrayList<>(List.of(
+                variante(40L, gorra, gris, null, 3),
+                variante(41L, gorra, negro, null, 12),
+                variante(42L, gorra, negro, null, 2),
+                variante(43L, gorra, rojo, null, 0))));
+        productos.put(4L, gorra);
+        paginas.add(new PaginaProductos(List.of(4L), 1));
+
+        var colores = bo().consultarLinea("caps", null, null).productos().getFirst().colores();
+
+        assertEquals(List.of("Negro", "Gris"), colores.stream().map(c -> c.nombre()).toList(),
+                "sin repetir, primero los que tienen foto; el rojo agotado no sale");
+        assertEquals("https://img/negro.jpg", colores.get(0).imagenUrl());
+        assertEquals("#111111", colores.get(0).hex());
+        assertNull(colores.get(1).imagenUrl(), "el gris no tiene foto propia: la tarjeta usa su color");
+    }
+
+    // ===== S1 · Búsqueda en toda la tienda =====
+
+    @Test void busquedaEnTodaLaTiendaCuentaPorLineaYNoExigeLinea() {
+        productos.put(4L, gorra(4L));
+        paginas.add(new PaginaProductos(List.of(4L), 1));
+
+        var respuesta = bo().buscar(null, peticion("9FORTY", null, 0), null);
+
+        assertNull(respuesta.linea());
+        assertNull(consultas.getFirst().idCategoria(), "sin línea busca en toda la tienda");
+        assertEquals(List.of("9forty"), consultas.getFirst().terminos());
+        assertEquals(1, respuesta.lineas().size());
+        assertEquals("caps", respuesta.lineas().getFirst().ruta());
+        assertEquals(12, respuesta.lineas().getFirst().cantidad());
+        assertTrue(contados.getFirst().idCategoria() == null && contados.getFirst().marcas().isEmpty(),
+                "el conteo por línea solo usa el texto");
+    }
+
+    @Test void busquedaAcotadaALineaYTextoObligatorio() {
+        paginas.add(new PaginaProductos(List.of(), 0));
+        bo().buscar("caps", peticion("negra", null, 0), null);
+        assertEquals(2L, consultas.getFirst().idCategoria());
+
+        var error = assertThrows(NegocioException.class, () -> bo().buscar(null, peticion("   ", null, 0), null));
+        assertEquals(TipoError.DATOS_INVALIDOS, error.getTipoError());
+    }
+
+    @Test void lineaNoTraeConteoPorLinea() {
+        paginas.add(new PaginaProductos(List.of(), 0));
+        assertTrue(bo().consultarLinea("caps", null, null).lineas().isEmpty());
     }
 
     // ===== A2 · Búsqueda sin resultados =====
@@ -250,6 +306,7 @@ class ConsultarCatalogoBOTest {
                 yield paginas.isEmpty() ? new PaginaProductos(List.of(), 0) : paginas.poll();
             }
             case "obtenerParaTienda" -> {
+                assertEquals(true, a[1], "las tarjetas cargan variantes para sus colores");
                 @SuppressWarnings("unchecked") var ids = (List<Long>) a[0];
                 yield ids.stream().map(productos::get).filter(Objects::nonNull).toList();
             }
@@ -259,6 +316,10 @@ class ConsultarCatalogoBOTest {
                 yield opciones();
             }
             case "obtenerVisibleEnTienda" -> visible.filter(p -> p.getId().equals(a[0]));
+            case "contarPorLinea" -> {
+                contados.add((FiltroCatalogo) a[0]);
+                yield List.of(new ConteoOpcion(2L, "CAPS ", 12));
+            }
             default -> throw new AssertionError("No se esperaba " + m);
         });
         var clientes = puerto(IClienteDAO.class, (m, a) -> {
@@ -280,7 +341,7 @@ class ConsultarCatalogoBOTest {
 
     private static OpcionesFiltroCatalogo opciones() {
         return new OpcionesFiltroCatalogo(
-                List.of(new ConteoOpcion(1L, "New Era", 96)),
+                List.of(new ConteoMarca(1L, "New Era", "https://logos/new-era.png", 96)),
                 List.of(new ConteoOpcion(5L, "9FORTY", 12)),
                 List.of(new ConteoColor(2L, "Negro", "#111111", 40)),
                 List.of(new ConteoTalla(103L, "7 1/2", 10L, "Numérica", "in", 3),

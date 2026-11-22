@@ -1,5 +1,6 @@
 package com.flystore.persistencia.dao.interfaces;
 
+import com.flystore.persistencia.consultas.ConteoOpcion;
 import com.flystore.persistencia.consultas.FiltroCatalogo;
 import com.flystore.persistencia.consultas.OpcionesFiltroCatalogo;
 import com.flystore.persistencia.consultas.PaginaProductos;
@@ -31,4 +32,7 @@ public interface IProductoDAO {
 
     /** Opciones con conteos para llenar los filtros del alcance indicado. */
     OpcionesFiltroCatalogo obtenerOpcionesFiltro(FiltroCatalogo alcance);
+
+    /** Productos visibles del alcance agrupados por línea (id, nombre y cantidad). */
+    List<ConteoOpcion> contarPorLinea(FiltroCatalogo alcance);
 }

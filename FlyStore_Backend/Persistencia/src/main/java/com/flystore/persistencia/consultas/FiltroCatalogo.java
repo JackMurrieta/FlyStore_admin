@@ -55,6 +55,12 @@ public record FiltroCatalogo(
         return deLinea(idCategoria, tipoPrecio).conOrden(orden);
     }
 
+    /** Solo el texto buscado en toda la tienda, sin línea ni filtros: para contar resultados por línea. */
+    public FiltroCatalogo soloTexto() {
+        return new FiltroCatalogo(null, terminos, cualquierTermino, Set.of(), Set.of(), Set.of(), Set.of(), Set.of(),
+                null, null, tipoPrecio, orden);
+    }
+
     /** Coincidencias parciales: misma línea y basta con una de las palabras buscadas. */
     public FiltroCatalogo coincidenciaParcial() {
         return new FiltroCatalogo(idCategoria, terminos, true, Set.of(), Set.of(), Set.of(), Set.of(), Set.of(),

@@ -1,6 +1,7 @@
 package com.flystore.modulos.catalogo.aplicacion.mappers;
 
 import com.flystore.contratos.catalogo.*;
+import com.flystore.persistencia.consultas.ConteoOpcion;
 import com.flystore.persistencia.consultas.ConteoTalla;
 import com.flystore.persistencia.consultas.OpcionesFiltroCatalogo;
 import com.flystore.persistencia.consultas.OrdenCatalogo;
@@ -32,11 +33,41 @@ public class CatalogoBOMapper {
         return nombreLinea == null ? "" : nombreLinea.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "-");
     }
 
-    public ProductoTarjetaDTO aProductoTarjetaDTO(Producto producto, PrecioProducto referencia) {
+    /**
+     * @param existencia piezas por variante (ya calculadas por el BO); solo se listan colores con existencia.
+     */
+    public ProductoTarjetaDTO aProductoTarjetaDTO(Producto producto, PrecioProducto referencia,
+            java.util.function.ToIntFunction<VarianteProducto> existencia) {
         return new ProductoTarjetaDTO(producto.getId(), producto.getClave(), producto.getNombre(),
                 producto.getMarca() == null ? null : producto.getMarca().getNombre(),
                 producto.getSubcategoria() == null ? null : producto.getSubcategoria().getNombre(),
-                imagenPrincipal(producto), aPrecioReferenciaDTO(referencia));
+                imagenPrincipal(producto), aPrecioReferenciaDTO(referencia), coloresTarjeta(producto, existencia));
+    }
+
+    /**
+     * Un cuadrito por color con existencia, con la primera foto de ese color. Primero los colores con
+     * foto, en el orden de la galería; después los que no tienen foto, por nombre.
+     */
+    public List<ColorTarjetaDTO> coloresTarjeta(Producto producto, java.util.function.ToIntFunction<VarianteProducto> existencia) {
+        var fotos = new LinkedHashMap<Long, ImagenProducto>();
+        lista(producto.getImagenes()).stream()
+                .filter(i -> i.getColor() != null && i.getColor().getId() != null)
+                .sorted(Comparator.comparing(ImagenProducto::getOrden, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(i -> fotos.putIfAbsent(i.getColor().getId(), i));
+        var colores = new LinkedHashMap<Long, Color>();
+        lista(producto.getVariantes()).stream()
+                .filter(v -> v.getColor() != null && v.getColor().getId() != null && existencia.applyAsInt(v) > 0)
+                .forEach(v -> colores.putIfAbsent(v.getColor().getId(), v.getColor()));
+        var posicion = new ArrayList<>(fotos.keySet());
+        return colores.values().stream()
+                .sorted(Comparator.comparingInt((Color c) -> {
+                            int indice = posicion.indexOf(c.getId());
+                            return indice < 0 ? Integer.MAX_VALUE : indice;
+                        })
+                        .thenComparing(c -> c.getNombreColor() == null ? "" : c.getNombreColor(), String.CASE_INSENSITIVE_ORDER))
+                .map(c -> new ColorTarjetaDTO(c.getId(), c.getNombreColor(), c.getHex(),
+                        fotos.containsKey(c.getId()) ? fotos.get(c.getId()).getUrlImagen() : null))
+                .toList();
     }
 
     public PrecioReferenciaDTO aPrecioReferenciaDTO(PrecioProducto precio) {
@@ -45,7 +76,7 @@ public class CatalogoBOMapper {
     }
 
     public OpcionesFiltroRespuestaDTO aOpcionesFiltroRespuestaDTO(OpcionesFiltroCatalogo opciones) {
-        var marcas = opciones.marcas().stream().map(o -> new OpcionFiltroDTO(o.id(), o.nombre(), o.cantidad())).toList();
+        var marcas = opciones.marcas().stream().map(o -> new MarcaFiltroDTO(o.id(), o.nombre(), o.logoUrl(), o.cantidad())).toList();
         var subcategorias = opciones.subcategorias().stream().map(o -> new OpcionFiltroDTO(o.id(), o.nombre(), o.cantidad())).toList();
         var colores = opciones.colores().stream().map(c -> new ColorFiltroDTO(c.id(), c.nombre(), c.hex(), c.cantidad())).toList();
         var porTipo = new LinkedHashMap<Long, List<ConteoTalla>>();
@@ -72,12 +103,15 @@ public class CatalogoBOMapper {
                 new CatalogoItemDTO(OrdenCatalogo.MAS_VENDIDOS.name(), "Más vendidos"));
     }
 
+    /** @param categoria línea consultada; null en la búsqueda de toda la tienda. */
     public CatalogoRespuestaDTO aCatalogoRespuestaDTO(Categoria categoria, List<ProductoTarjetaDTO> productos,
             OpcionesFiltroRespuestaDTO opciones, int pagina, int tamanoPagina, long total, TipoPrecio tipoPrecio,
-            List<ProductoTarjetaDTO> sugerencias) {
+            List<ProductoTarjetaDTO> sugerencias, List<ConteoOpcion> lineas) {
         boolean hayMas = (long) (pagina + 1) * tamanoPagina < total;
-        return new CatalogoRespuestaDTO(aLineaDTO(categoria), productos, opciones, pagina, tamanoPagina, total, hayMas,
-                tipoPrecio.name(), sugerencias);
+        var conteoLineas = lineas.stream()
+                .map(l -> new LineaConteoDTO(l.id(), l.nombre(), ruta(l.nombre()), l.cantidad())).toList();
+        return new CatalogoRespuestaDTO(categoria == null ? null : aLineaDTO(categoria), productos, opciones, pagina,
+                tamanoPagina, total, hayMas, tipoPrecio.name(), sugerencias, conteoLineas);
     }
 
     /**

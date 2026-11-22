@@ -83,6 +83,17 @@ class ConsultaTiendaSqlTest {
         assertTrue(sql.conteoTallas().contains("tt.unidad_medida"));
     }
 
+    @Test void marcasTraenSuLogoYLaBusquedaCuentaPorLinea() {
+        var sql = new ConsultaTiendaSql(filtro(List.of("9forty"), Set.of(1L), Set.of(), Set.of(), Set.of(), null, null,
+                OrdenCatalogo.RECIENTES).soloTexto());
+        assertTrue(sql.conteoMarcas().startsWith("select m.id, m.nombre, m.logo_url, count(*)"));
+        var lineas = sql.conteoLineas();
+        assertTrue(lineas.startsWith("select c.id, c.nombre, count(*)"));
+        assertTrue(lineas.contains("strpos("), "cuenta los resultados del texto buscado");
+        assertFalse(lineas.contains("c.id = :categoria"), "en toda la tienda");
+        assertFalse(lineas.contains("p.marca_id in"), "sin los demás filtros");
+    }
+
     @Test void cadaOrdenTieneDesempateEstable() {
         for (var orden : OrdenCatalogo.values()) {
             var sql = new ConsultaTiendaSql(filtro(List.of(), Set.of(), Set.of(), Set.of(), Set.of(), null, null, orden)).idsOrdenados();

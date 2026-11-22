@@ -10,7 +10,7 @@ import java.util.List;
  * @param ordenes        valores para el parámetro orden con su etiqueta para la vista.
  */
 public record OpcionesFiltroRespuestaDTO(
-        List<OpcionFiltroDTO> marcas,
+        List<MarcaFiltroDTO> marcas,
         List<OpcionFiltroDTO> subcategorias,
         List<ColorFiltroDTO> colores,
         List<TipoTallaFiltroDTO> tiposTalla,

@@ -34,8 +34,8 @@ public class ConsultarCatalogoController {
 
     /**
      * Productos de una línea (caps, essence, clothes, shoes) en bloques de 30, con búsqueda, filtros,
-     * orden y las opciones para llenar los filtros. Las rutas literales del catálogo admin
-     * (/filtros) tienen prioridad sobre este patrón.
+     * orden y las opciones para llenar los filtros. Las rutas literales (/buscar y /filtros del catálogo
+     * admin) tienen prioridad sobre este patrón.
      */
     @GetMapping("/{linea}")
     public ResponseEntity<CatalogoRespuestaDTO> consultarLinea(
@@ -54,6 +54,29 @@ public class ConsultarCatalogoController {
         var filtros = new FiltrosCatalogoPeticionDTO(texto, marcas, subcategorias, tallas, colores, unidadesMedida,
                 precioMin, precioMax, orden, pagina);
         return ResponseEntity.ok(catalogoBO.consultarLinea(linea, filtros, sesion.usuario(request).orElse(null)));
+    }
+
+    /**
+     * S1 · Búsqueda en toda la tienda con los mismos filtros, orden y páginas. {@code linea} opcional acota
+     * a una línea; la respuesta trae cuántos resultados hay en cada línea. Texto vacío → 400 (A1).
+     */
+    @GetMapping("/buscar")
+    public ResponseEntity<CatalogoRespuestaDTO> buscar(
+            @RequestParam(required = false) String texto,
+            @RequestParam(required = false) String linea,
+            @RequestParam(name = "marca", required = false) List<Long> marcas,
+            @RequestParam(name = "subcategoria", required = false) List<Long> subcategorias,
+            @RequestParam(name = "talla", required = false) List<Long> tallas,
+            @RequestParam(name = "color", required = false) List<Long> colores,
+            @RequestParam(name = "unidadMedida", required = false) List<String> unidadesMedida,
+            @RequestParam(required = false) BigDecimal precioMin,
+            @RequestParam(required = false) BigDecimal precioMax,
+            @RequestParam(required = false) String orden,
+            @RequestParam(defaultValue = "0") Integer pagina,
+            HttpServletRequest request) {
+        var filtros = new FiltrosCatalogoPeticionDTO(texto, marcas, subcategorias, tallas, colores, unidadesMedida,
+                precioMin, precioMax, orden, pagina);
+        return ResponseEntity.ok(catalogoBO.buscar(linea, filtros, sesion.usuario(request).orElse(null)));
     }
 
     /** 3.2.4 · Ficha del producto con variantes (color, talla, existencia) y esquemas de precio. */

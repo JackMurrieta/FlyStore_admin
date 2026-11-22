@@ -8,7 +8,7 @@ import java.util.List;
  * con cuántos productos tiene cada opción y el rango del precio de referencia.
  */
 public record OpcionesFiltroCatalogo(
-        List<ConteoOpcion> marcas,
+        List<ConteoMarca> marcas,
         List<ConteoOpcion> subcategorias,
         List<ConteoColor> colores,
         List<ConteoTalla> tallas,

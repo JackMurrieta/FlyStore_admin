@@ -39,7 +39,7 @@ class ConsultarCatalogoControllerTest {
             llamadas.add(new Object[]{m, a});
             if (noEncontrado) throw new NegocioException(TipoError.NO_ENCONTRADO, "No existe la línea");
             return switch (m) {
-                case "consultarLinea" -> catalogo();
+                case "consultarLinea", "buscar" -> catalogo();
                 case "obtenerProducto" -> ficha();
                 case "obtenerFiltrosDisponibles" -> new FiltrosDisponiblesDTO(List.of(), List.of(), List.of());
                 default -> List.of();
@@ -76,6 +76,19 @@ class ConsultarCatalogoControllerTest {
         assertNull(args[2], "sin cookie entra como visitante");
     }
 
+    @Test void busquedaEnTodaLaTiendaNoSeConfundeConUnaLinea() throws Exception {
+        mvc.perform(get("/api/catalogo/buscar").param("texto", "9forty").param("linea", "caps").param("color", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.productos[0].colores[0].imagenUrl").value("https://img/negro.jpg"))
+                .andExpect(jsonPath("$.opcionesFiltro.marcas[0].logoUrl").value("https://logos/ne.png"))
+                .andExpect(jsonPath("$.lineas[0].cantidad").value(48));
+        assertEquals("buscar", llamadas.getFirst()[0]);
+        var args = (Object[]) llamadas.getFirst()[1];
+        assertEquals("caps", args[0]);
+        assertEquals("9forty", ((FiltrosCatalogoPeticionDTO) args[1]).texto());
+        assertEquals(List.of(2L), ((FiltrosCatalogoPeticionDTO) args[1]).colores());
+    }
+
     @Test void sesionOpcionalUsaElClienteYUnTokenVencidoNoDa401() throws Exception {
         mvc.perform(get("/api/catalogo/caps").cookie(new Cookie("access_token", "valido"))).andExpect(status().isOk());
         assertEquals(USUARIO, ((Object[]) llamadas.get(0)[1])[2]);
@@ -107,12 +120,13 @@ class ConsultarCatalogoControllerTest {
 
     private static CatalogoRespuestaDTO catalogo() {
         var precio = new PrecioReferenciaDTO("MAYOREO", new BigDecimal("130.00"), 6);
-        var tarjeta = new ProductoTarjetaDTO(4L, "NE-940", "9FORTY LA Dodgers", "New Era", "9FORTY", "https://img/1.jpg", precio);
-        var opciones = new OpcionesFiltroRespuestaDTO(List.of(new OpcionFiltroDTO(1L, "New Era", 96)), List.of(), List.of(),
+        var tarjeta = new ProductoTarjetaDTO(4L, "NE-940", "9FORTY LA Dodgers", "New Era", "9FORTY", "https://img/1.jpg", precio,
+                List.of(new ColorTarjetaDTO(2L, "Negro", "#111111", "https://img/negro.jpg")));
+        var opciones = new OpcionesFiltroRespuestaDTO(List.of(new MarcaFiltroDTO(1L, "New Era", "https://logos/ne.png", 96)), List.of(), List.of(),
                 List.of(new TipoTallaFiltroDTO(10L, "Numérica", "in", List.of(new OpcionFiltroDTO(100L, "7 1/8", 5)))),
                 List.of("in"), new RangoPrecioDTO(new BigDecimal("110"), new BigDecimal("290")), List.of());
         return new CatalogoRespuestaDTO(new LineaDTO(2L, "CAPS", "caps", null), List.of(tarjeta), opciones, 0, 30, 48, true,
-                "MAYOREO", List.of());
+                "MAYOREO", List.of(), List.of(new LineaConteoDTO(2L, "CAPS", "caps", 48)));
     }
 
     private static ProductoDetalleRespuestaDTO ficha() {

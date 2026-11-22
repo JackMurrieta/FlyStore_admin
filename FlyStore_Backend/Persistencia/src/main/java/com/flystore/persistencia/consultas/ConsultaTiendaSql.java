@@ -94,9 +94,17 @@ public final class ConsultaTiendaSql {
     }
 
     public String conteoMarcas() {
-        return "select m.id, m.nombre, count(*) from (" + alcance(false) + ") x"
+        return "select m.id, m.nombre, m.logo_url, count(*) from (" + alcance(false) + ") x"
                 + " join producto p on p.id = x.id join marca m on m.id = p.marca_id"
-                + " group by m.id, m.nombre order by lower(m.nombre), m.id";
+                + " group by m.id, m.nombre, m.logo_url order by lower(m.nombre), m.id";
+    }
+
+    /** Productos del alcance por línea (búsqueda en toda la tienda: «12 coincidencias en Gorras»). */
+    public String conteoLineas() {
+        return "select c.id, c.nombre, count(*) from (" + alcance(false) + ") x"
+                + " join producto p on p.id = x.id join subcategoria s on s.id = p.subcategoria_id"
+                + " join categoria c on c.id = s.categoria_id"
+                + " group by c.id, c.nombre order by count(*) desc, lower(c.nombre), c.id";
     }
 
     public String conteoSubcategorias() {
