@@ -126,7 +126,8 @@ class AdministrarPedidosControllerTest {
     @Test void elPersonalYaNoTieneRutaParaCancelar() throws Exception {
         mvc.perform(post("/api/admin/pedidos/FLY-000128/cancelar").principal(SESION)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"motivo\": \"x\"}"))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("RECURSO_NO_ENCONTRADO"));
         assertTrue(llamadas.isEmpty(), "Solo el cliente cancela, desde /api/ventas");
     }
 

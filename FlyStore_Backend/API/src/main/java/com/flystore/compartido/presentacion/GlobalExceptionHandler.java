@@ -5,12 +5,16 @@ import com.flystore.contratos.autenticacion.ValidationErrorDTO;
 import com.flystore.dominio.excepcion.NegocioException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,6 +85,36 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errorResponse);
+    }
+
+    /**
+     * Ruta que no existe: 404. Con Spring Boot la petición llega al manejador de recursos
+     * estáticos, que lanza NoResourceFoundException; sin él (MockMvc standalone) el
+     * DispatcherServlet lanza NoHandlerFoundException. Sin este manejador ambas caían en
+     * handleGenericException y respondían 500.
+     */
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ErrorDTO> handleRutaNoEncontrada(Exception ex) {
+        logger.debug("Ruta no encontrada: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorDTO("RECURSO_NO_ENCONTRADO", "La ruta solicitada no existe"));
+    }
+
+    /**
+     * La ruta existe pero no admite ese método HTTP: 405 con el encabezado Allow que indica
+     * los métodos que sí acepta. Antes también caía en handleGenericException (500).
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorDTO> handleMetodoNoPermitido(HttpRequestMethodNotSupportedException ex) {
+        logger.debug("Método no permitido: {}", ex.getMessage());
+        var respuesta = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        var permitidos = ex.getSupportedHttpMethods();
+        if (permitidos != null && !permitidos.isEmpty()) {
+            respuesta.allow(permitidos.toArray(HttpMethod[]::new));
+        }
+        return respuesta.body(new ErrorDTO("METODO_NO_PERMITIDO",
+                "El método " + ex.getMethod() + " no está permitido en esta ruta"));
     }
 
     /**
