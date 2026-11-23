@@ -22,8 +22,8 @@ public interface IProductoDAO {
     // ===== CU-03 Editar producto =====
 
     /**
-     * Producto bloqueado para editarlo, con línea, marca, variantes (color y talla), imágenes (color)
-     * y precios ya cargados.
+     * Producto para editarlo, con línea, marca, variantes (color y talla), imágenes (color) y precios ya cargados.
+     * No bloquea (sirve también en transacciones de solo lectura); para guardar, bloquear antes con {@link #obtenerPorId}.
      */
     Optional<Producto> obtenerParaEditar(Long idProducto);
 

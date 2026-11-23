@@ -156,7 +156,9 @@ public class ProductoDAO implements IProductoDAO {
 
     @Override
     public Optional<Producto> obtenerParaEditar(Long idProducto) {
-        var producto = entityManager.find(Producto.class, idProducto, LockModeType.PESSIMISTIC_WRITE);
+        // Sin bloqueo: el GET del formulario corre en una transacción de solo lectura y PostgreSQL rechaza
+        // SELECT … FOR UPDATE ahí (error 25006). El PUT bloquea antes con obtenerPorId.
+        var producto = entityManager.find(Producto.class, idProducto);
         if (producto == null) return Optional.empty();
         var ids = List.of(idProducto);
         // Una consulta por colección (las listas no se pueden traer juntas); llenan el mismo objeto.
