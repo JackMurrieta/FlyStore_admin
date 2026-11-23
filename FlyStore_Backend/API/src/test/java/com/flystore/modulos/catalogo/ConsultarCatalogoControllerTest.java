@@ -121,7 +121,7 @@ class ConsultarCatalogoControllerTest {
     private static CatalogoRespuestaDTO catalogo() {
         var precio = new PrecioReferenciaDTO("MAYOREO", new BigDecimal("130.00"), 6);
         var tarjeta = new ProductoTarjetaDTO(4L, "NE-940", "9FORTY LA Dodgers", "New Era", "9FORTY", "https://img/1.jpg", precio,
-                List.of(new ColorTarjetaDTO(2L, "Negro", "#111111", "https://img/negro.jpg")));
+                List.of(new ColorTarjetaDTO(2L, "Negro", "#111111", "https://img/negro.jpg")), null);
         var opciones = new OpcionesFiltroRespuestaDTO(List.of(new MarcaFiltroDTO(1L, "New Era", "https://logos/ne.png", 96)), List.of(), List.of(),
                 List.of(new TipoTallaFiltroDTO(10L, "Numérica", "in", List.of(new OpcionFiltroDTO(100L, "7 1/8", 5)))),
                 List.of("in"), new RangoPrecioDTO(new BigDecimal("110"), new BigDecimal("290")), List.of());

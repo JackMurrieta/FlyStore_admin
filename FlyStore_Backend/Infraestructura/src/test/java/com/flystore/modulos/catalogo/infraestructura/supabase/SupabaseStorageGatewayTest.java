@@ -42,6 +42,17 @@ class SupabaseStorageGatewayTest {
         server.verify();
     }
 
+    @Test void rutaDeSoloReconoceArchivosSubidosPorElBackend() {
+        var adapter = new SupabaseStorageGateway(properties("sb_secret_prueba"), RestClient.builder().build());
+        String base = "https://proyecto.supabase.co/storage/v1/object/public/productos/";
+        String propia = "catalogo/0b4c1f62-7b0e-4c8e-9a51-3f8f1c2d9e10.webp";
+        assertEquals(java.util.Optional.of(propia), adapter.rutaDe(base + propia));
+        assertTrue(adapter.rutaDe(base + "flycaps/newEra-drop/gorra/01.webp").isEmpty(), "otra carpeta del bucket");
+        assertTrue(adapter.rutaDe("https://otro.supabase.co/storage/v1/object/public/productos/" + propia).isEmpty(), "otro proyecto");
+        assertTrue(adapter.rutaDe("https://example.com/gorra.jpg").isEmpty());
+        assertTrue(adapter.rutaDe(null).isEmpty());
+    }
+
     @Test void errorDeStorageIntentaLimpiarLaRutaSinExponerCredenciales() {
         var builder = RestClient.builder().baseUrl("https://proyecto.supabase.co");
         var server = MockRestServiceServer.bindTo(builder).build();

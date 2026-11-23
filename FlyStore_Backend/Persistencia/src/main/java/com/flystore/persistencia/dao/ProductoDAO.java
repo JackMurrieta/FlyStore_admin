@@ -1,5 +1,6 @@
 package com.flystore.persistencia.dao;
 
+import com.flystore.persistencia.cambios.CambiosProducto;
 import com.flystore.persistencia.consultas.*;
 import com.flystore.persistencia.dao.interfaces.IProductoDAO;
 import com.flystore.persistencia.entidades.*;
@@ -95,22 +96,47 @@ public class ProductoDAO implements IProductoDAO {
         }
         producto.setSubcategoria(subcategoria);
         producto.setMarca(marca);
+        var colores = new HashMap<String, Color>();
+        var tallas = new HashMap<String, Talla>();
+        Long idCategoria = subcategoria.getCategoria().getId();
         for (var variante : producto.getVariantes()) {
-            var colores = entityManager.createQuery("select c from Color c where lower(c.nombreColor) = :nombre", Color.class)
-                    .setParameter("nombre", variante.getColor().getNombreColor().toLowerCase(Locale.ROOT)).setMaxResults(2).getResultList();
-            var tallas = entityManager.createQuery("select t from Talla t where lower(t.etiqueta) = :nombre and t.tipoTalla.categoria.id = :categoria", Talla.class)
-                    .setParameter("nombre", variante.getTalla().getEtiqueta().toLowerCase(Locale.ROOT))
-                    .setParameter("categoria", subcategoria.getCategoria().getId()).setMaxResults(2).getResultList();
-            if (colores.size() != 1) throw new DatosCatalogoInvalidosException("Selecciona un color existente y sin duplicados en el catálogo");
-            if (tallas.size() != 1) throw new DatosCatalogoInvalidosException("Selecciona una talla válida y sin duplicados para la categoría");
-            variante.setColor(colores.getFirst());
-            variante.setTalla(tallas.getFirst());
+            variante.setColor(color(variante.getColor().getNombreColor(), colores));
+            variante.setTalla(talla(variante.getTalla().getEtiqueta(), idCategoria, tallas));
             variante.setProducto(producto);
         }
+        for (var imagen : producto.getImagenes()) {
+            // La imagen se liga al color por nombre, igual que las variantes.
+            if (imagen.getColor() != null) imagen.setColor(color(imagen.getColor().getNombreColor(), colores));
+            imagen.setProducto(producto);
+        }
         producto.getPrecios().forEach(p -> p.setProducto(producto));
-        producto.getImagenes().forEach(i -> i.setProducto(producto));
         entityManager.persist(producto);
         entityManager.flush();
+    }
+
+    /** Color del catálogo por nombre, sin distinguir mayúsculas; no crea colores. */
+    private Color color(String nombre, Map<String, Color> resueltos) {
+        String clave = nombre == null ? "" : nombre.trim().toLowerCase(Locale.ROOT);
+        var conocido = resueltos.get(clave);
+        if (conocido != null) return conocido;
+        var colores = entityManager.createQuery("select c from Color c where lower(c.nombreColor) = :nombre", Color.class)
+                .setParameter("nombre", clave).setMaxResults(2).getResultList();
+        if (colores.size() != 1) throw new DatosCatalogoInvalidosException("Selecciona un color existente y sin duplicados en el catálogo");
+        resueltos.put(clave, colores.getFirst());
+        return colores.getFirst();
+    }
+
+    /** Talla por etiqueta dentro de la línea, sin distinguir mayúsculas; no crea tallas. */
+    private Talla talla(String etiqueta, Long idCategoria, Map<String, Talla> resueltas) {
+        String clave = etiqueta == null ? "" : etiqueta.trim().toLowerCase(Locale.ROOT);
+        var conocida = resueltas.get(clave);
+        if (conocida != null) return conocida;
+        var tallas = entityManager.createQuery("select t from Talla t where lower(t.etiqueta) = :nombre and t.tipoTalla.categoria.id = :categoria", Talla.class)
+                .setParameter("nombre", clave)
+                .setParameter("categoria", idCategoria).setMaxResults(2).getResultList();
+        if (tallas.size() != 1) throw new DatosCatalogoInvalidosException("Selecciona una talla válida y sin duplicados para la categoría");
+        resueltas.put(clave, tallas.getFirst());
+        return tallas.getFirst();
     }
 
     @Override
@@ -124,6 +150,115 @@ public class ProductoDAO implements IProductoDAO {
         var producto = obtenerPorId(idProducto).orElseThrow(() -> new EntityNotFoundException("Producto no encontrado"));
         entityManager.remove(producto);
         entityManager.flush();
+    }
+
+    // ===== CU-03 Editar producto =====
+
+    @Override
+    public Optional<Producto> obtenerParaEditar(Long idProducto) {
+        var producto = entityManager.find(Producto.class, idProducto, LockModeType.PESSIMISTIC_WRITE);
+        if (producto == null) return Optional.empty();
+        var ids = List.of(idProducto);
+        // Una consulta por colección (las listas no se pueden traer juntas); llenan el mismo objeto.
+        entityManager.createQuery("select p from Producto p join fetch p.subcategoria s join fetch s.categoria join fetch p.marca where p.id in :ids", Producto.class)
+                .setParameter("ids", ids).getResultList();
+        entityManager.createQuery("select distinct p from Producto p left join fetch p.precios where p.id in :ids", Producto.class)
+                .setParameter("ids", ids).getResultList();
+        entityManager.createQuery("select distinct p from Producto p left join fetch p.imagenes i left join fetch i.color where p.id in :ids", Producto.class)
+                .setParameter("ids", ids).getResultList();
+        entityManager.createQuery("select distinct p from Producto p left join fetch p.variantes v left join fetch v.color left join fetch v.talla where p.id in :ids", Producto.class)
+                .setParameter("ids", ids).getResultList();
+        return Optional.of(producto);
+    }
+
+    @Override
+    public Set<Long> variantesConPedidos(Long idProducto) {
+        return new HashSet<>(entityManager.createQuery(
+                "select distinct d.varianteProducto.id from DetallePedidoVarianteProducto d where d.varianteProducto.producto.id = :id", Long.class)
+                .setParameter("id", idProducto).getResultList());
+    }
+
+    @Override
+    public boolean existeOtroConClave(String clave, Long idProducto) {
+        return entityManager.createQuery("select count(p) from Producto p where lower(p.clave) = lower(:clave) and p.id <> :id", Long.class)
+                .setParameter("clave", clave.trim()).setParameter("id", idProducto).getSingleResult() > 0;
+    }
+
+    @Override
+    public void actualizar(Long idProducto, CambiosProducto cambios) {
+        var producto = entityManager.find(Producto.class, idProducto);
+        if (producto == null) throw new EntityNotFoundException("Producto no encontrado");
+        Long idCategoria = producto.getSubcategoria().getCategoria().getId();
+
+        // 1) Resolver y validar todo antes de tocar el producto: las consultas no ven cambios a medias.
+        var subcategoria = entityManager.find(Subcategoria.class, cambios.idSubcategoria());
+        var marca = entityManager.find(Marca.class, cambios.idMarca());
+        if (subcategoria == null || marca == null) throw new EntityNotFoundException("Subcategoría o marca no encontrada");
+        if (!subcategoria.getCategoria().getId().equals(idCategoria))
+            throw new DatosCatalogoInvalidosException("El tipo debe ser de la misma línea del producto");
+        if (!marca.getId().equals(producto.getMarca().getId()) && !Boolean.TRUE.equals(marca.getActivo()))
+            throw new DatosCatalogoInvalidosException("La marca no está activa");
+        var variantesActuales = new HashSet<Long>();
+        producto.getVariantes().forEach(v -> variantesActuales.add(v.getId()));
+        var imagenesActuales = new HashMap<Long, ImagenProducto>();
+        producto.getImagenes().forEach(i -> imagenesActuales.put(i.getId(), i));
+        if (!variantesActuales.containsAll(cambios.existencias().keySet()))
+            throw new DatosCatalogoInvalidosException("Una de las variantes no pertenece al producto");
+        var colores = new HashMap<String, Color>();
+        var tallas = new HashMap<String, Talla>();
+        for (var nueva : cambios.variantesNuevas()) {
+            nueva.setColor(color(nueva.getColor().getNombreColor(), colores));
+            nueva.setTalla(talla(nueva.getTalla().getEtiqueta(), idCategoria, tallas));
+        }
+        var coloresImagen = new ArrayList<Color>();
+        for (var imagen : cambios.imagenes()) {
+            if (imagen.idImagen() != null && !imagenesActuales.containsKey(imagen.idImagen()))
+                throw new DatosCatalogoInvalidosException("Una de las imágenes no pertenece al producto");
+            coloresImagen.add(imagen.color() == null ? null : color(imagen.color(), colores));
+        }
+
+        // 2) Aplicar. orphanRemoval borra las variantes, imágenes y precios que se quitan de las listas.
+        producto.setClave(cambios.clave());
+        producto.setNombre(cambios.nombre());
+        producto.setDescripcion(cambios.descripcion());
+        producto.setSubcategoria(subcategoria);
+        producto.setMarca(marca);
+        producto.setEstadoProducto(cambios.estado());
+
+        producto.getVariantes().removeIf(v -> !cambios.existencias().containsKey(v.getId()));
+        producto.getVariantes().forEach(v -> v.setStock(cambios.existencias().get(v.getId())));
+        for (var nueva : cambios.variantesNuevas()) {
+            nueva.setProducto(producto);
+            producto.getVariantes().add(nueva);
+        }
+
+        var conservadas = new HashSet<Long>();
+        cambios.imagenes().forEach(i -> { if (i.idImagen() != null) conservadas.add(i.idImagen()); });
+        producto.getImagenes().removeIf(i -> !conservadas.contains(i.getId()));
+        for (int orden = 0; orden < cambios.imagenes().size(); orden++) {
+            var cambio = cambios.imagenes().get(orden);
+            var imagen = cambio.idImagen() != null ? imagenesActuales.get(cambio.idImagen()) : new ImagenProducto();
+            if (cambio.idImagen() == null) {
+                imagen.setUrlImagen(cambio.url());
+                imagen.setProducto(producto);
+                producto.getImagenes().add(imagen);
+            }
+            imagen.setColor(coloresImagen.get(orden));
+            imagen.setOrden(orden);
+        }
+
+        producto.getPrecios().clear();
+        for (var precio : cambios.precios()) {
+            precio.setProducto(producto);
+            producto.getPrecios().add(precio);
+        }
+        entityManager.flush();
+    }
+
+    @Override
+    public boolean imagenEnUso(String url) {
+        return entityManager.createQuery("select count(i) from ImagenProducto i where i.urlImagen = :url", Long.class)
+                .setParameter("url", url).getSingleResult() > 0;
     }
 
     // ===== CU-01 Consultar catálogo (tienda) =====

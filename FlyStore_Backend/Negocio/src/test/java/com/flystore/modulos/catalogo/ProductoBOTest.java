@@ -32,7 +32,7 @@ class ProductoBOTest {
     }
     private CrearProductoDTO datos(List<VarianteDTO> variantes, List<PrecioProductoDTO> precios) {
         return new CrearProductoDTO("GORRA-01", "Gorra", "Gorra bordada", "1", "2", "3",
-                List.of("https://example.com/gorra.jpg"), "PUBLICADO", variantes, precios);
+                List.of(new ImagenColorDTO(null, "https://example.com/gorra.jpg", null, "Rojo")), "PUBLICADO", variantes, precios);
     }
     private CrearProductoDTO datos() {
         return datos(List.of(new VarianteDTO("M", "Rojo", 5)),
@@ -58,7 +58,7 @@ class ProductoBOTest {
         assertNotNull(p.getVariantes().getFirst().getSku());
         assertEquals(new BigDecimal("100.00"), p.getPrecios().getFirst().getPrecio());
         assertEquals(0, p.getImagenes().getFirst().getOrden());
-        assertNull(p.getImagenes().getFirst().getColor());
+        assertEquals("Rojo", p.getImagenes().getFirst().getColor().getNombreColor(), "la imagen queda ligada a su color");
     }
 
     @Test void claveDuplicadaNoSeGuarda() {

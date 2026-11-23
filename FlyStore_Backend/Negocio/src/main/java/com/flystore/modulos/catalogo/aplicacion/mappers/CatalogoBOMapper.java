@@ -7,6 +7,7 @@ import com.flystore.persistencia.consultas.OpcionesFiltroCatalogo;
 import com.flystore.persistencia.consultas.OrdenCatalogo;
 import com.flystore.persistencia.entidades.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,14 +35,27 @@ public class CatalogoBOMapper {
     }
 
     /**
-     * @param existencia piezas por variante (ya calculadas por el BO); solo se listan colores con existencia.
+     * @param existencia      piezas por variante (ya calculadas por el BO); solo se listan colores con existencia.
+     * @param coloresBuscados colores del filtro: si el producto tiene alguno, la tarjeta usa la foto de ese
+     *                        color, lo pone primero y lo devuelve en {@code idColorDestacado}.
      */
     public ProductoTarjetaDTO aProductoTarjetaDTO(Producto producto, PrecioProducto referencia,
-            java.util.function.ToIntFunction<VarianteProducto> existencia) {
+            java.util.function.ToIntFunction<VarianteProducto> existencia, Collection<Long> coloresBuscados) {
+        var colores = coloresTarjeta(producto, existencia);
+        var destacado = coloresBuscados == null || coloresBuscados.isEmpty() ? null
+                : colores.stream().filter(c -> coloresBuscados.contains(c.idColor())).findFirst().orElse(null);
+        String imagen = imagenPrincipal(producto);
+        if (destacado != null) {
+            var ordenados = new ArrayList<ColorTarjetaDTO>(colores.size());
+            ordenados.add(destacado);
+            colores.stream().filter(c -> c != destacado).forEach(ordenados::add);
+            colores = List.copyOf(ordenados);
+            if (destacado.imagenUrl() != null) imagen = destacado.imagenUrl();
+        }
         return new ProductoTarjetaDTO(producto.getId(), producto.getClave(), producto.getNombre(),
                 producto.getMarca() == null ? null : producto.getMarca().getNombre(),
                 producto.getSubcategoria() == null ? null : producto.getSubcategoria().getNombre(),
-                imagenPrincipal(producto), aPrecioReferenciaDTO(referencia), coloresTarjeta(producto, existencia));
+                imagen, aPrecioReferenciaDTO(referencia), colores, destacado == null ? null : destacado.idColor());
     }
 
     /**

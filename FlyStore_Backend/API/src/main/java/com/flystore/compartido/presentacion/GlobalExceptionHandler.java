@@ -121,6 +121,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorDTO> handleArchivoDemasiadoGrande(Exception ex) {
-        return ResponseEntity.status(413).body(new ErrorDTO("IMAGEN_DEMASIADO_GRANDE", "La imagen no debe superar 5 MB"));
+        return ResponseEntity.status(413).body(new ErrorDTO("IMAGEN_DEMASIADO_GRANDE", "Cada imagen debe pesar máximo 5 MB y todas juntas 50 MB"));
     }
 }

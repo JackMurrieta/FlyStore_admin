@@ -3,7 +3,10 @@ package com.flystore.modulos.catalogo.aplicacion;
 import com.flystore.contratos.catalogo.*;
 import com.flystore.persistencia.dao.interfaces.*;
 import com.flystore.persistencia.entidades.EstadoProducto;
+import com.flystore.persistencia.entidades.ImagenProducto;
+import com.flystore.persistencia.entidades.Producto;
 import com.flystore.persistencia.entidades.TipoPrecio;
+import com.flystore.persistencia.entidades.VarianteProducto;
 import com.flystore.modulos.catalogo.aplicacion.mappers.ProductoMapper;
 import com.flystore.dominio.excepcion.*;
 import java.util.*;
@@ -92,38 +95,241 @@ public class ProductoBO implements IProductoBO {
 
     @Override
     @Transactional
-    public void crearProductoConImagen(CrearProductoDTO dto, ArchivoImagen archivo) {
+    public void crearProductoConImagenes(CrearProductoDTO dto, List<ArchivoImagen> archivos) {
+        var nuevos = archivos == null ? List.<ArchivoImagen>of() : archivos;
         validarDatosProducto(dto);
         validarStock(dto.variantes());
         validarCoherenciaPrecios(dto.preciosProducto());
-        validarImagen(archivo);
+        validarOrigenImagenes(dto.imagenes(), nuevos, false);
+        validarColoresDeImagenes(dto.imagenes(), coloresDe(dto.variantes().stream().map(VarianteDTO::color).toList()));
         validarProductoNoDuplicado(dto.clave());
-        var imagen = almacenImagenes.subir(archivo);
-        boolean transaccion = TransactionSynchronizationManager.isSynchronizationActive()
-                && TransactionSynchronizationManager.isActualTransactionActive();
-        if (transaccion) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCompletion(int estado) {
-                    if (estado == STATUS_ROLLED_BACK) retirarImagen(imagen);
-                    else if (estado != STATUS_COMMITTED) logger.warn("Resultado de transacción desconocido; conservar imagen {} para reconciliar", imagen.ruta());
-                }
-            });
-        }
+        var subidas = subirImagenes(nuevos);
         try {
-            var completo = new CrearProductoDTO(dto.clave(), dto.nombre(), dto.descripcion(), dto.idCategoria(),
-                    dto.idSubcategoria(), dto.idMarca(), List.of(imagen.url()), dto.estado(), dto.variantes(), dto.preciosProducto());
-            productoDAO.guardar(productoMapper.aProducto(completo));
+            productoDAO.guardar(productoMapper.aProducto(dto, urls(subidas)));
         } catch (RuntimeException | Error e) {
-            // En producción también cubre errores durante el commit mediante afterCompletion.
-            if (!transaccion) retirarImagen(imagen);
+            // Con transacción, afterCompletion retira las imágenes; sin ella se retiran aquí.
+            if (!enTransaccion()) subidas.forEach(this::retirarImagen);
             if (e instanceof IllegalArgumentException || e instanceof DatosCatalogoInvalidosException) throw invalido(e.getMessage());
             throw e;
         }
     }
 
+    // ===== CU-03 S1 · Editar producto =====
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductoEdicionDTO obtenerProductoParaEditar(String idProducto) {
+        Long id = ProductoMapper.id(idProducto);
+        var producto = productoDAO.obtenerParaEditar(id).orElseThrow(this::productoNoEncontrado);
+        return productoMapper.aProductoEdicionDTO(producto, productoDAO.variantesConPedidos(id));
+    }
+
+    @Override
+    @Transactional
+    public ProductoEdicionDTO editarProducto(String idProducto, EditarProductoDTO dto, List<ArchivoImagen> archivos) {
+        Long id = ProductoMapper.id(idProducto);
+        var nuevos = archivos == null ? List.<ArchivoImagen>of() : archivos;
+        // Primero lo que no necesita la base: datos, variantes, precios e imágenes de la petición.
+        validarDatosEdicion(dto);
+        validarVariantesEdicion(dto.variantes());
+        validarCoherenciaPrecios(dto.preciosProducto());
+        validarOrigenImagenes(dto.imagenes(), nuevos, true);
+
+        productoDAO.obtenerPorId(id).orElseThrow(this::productoNoEncontrado); // bloquea el producto
+        var producto = productoDAO.obtenerParaEditar(id).orElseThrow(this::productoNoEncontrado);
+        var estado = EstadoProducto.valueOf(dto.estado());
+        if (estado == EstadoProducto.STOCK_BAJO && producto.getEstadoProducto() != EstadoProducto.STOCK_BAJO)
+            throw invalido("Elige Publicado, Borrador o Inactivo");
+        if (!dto.clave().trim().equalsIgnoreCase(producto.getClave()) && productoDAO.existeOtroConClave(dto.clave(), id))
+            throw new NegocioException(TipoError.RECURSO_YA_EXISTE, "La clave del producto ya existe");
+
+        var conPedidos = productoDAO.variantesConPedidos(id);
+        var existencias = existencias(producto, dto.variantes(), conPedidos);
+        validarColoresDeImagenes(dto.imagenes(), coloresActivos(producto, dto.variantes()));
+        var quitadas = imagenesQuitadas(producto, dto.imagenes());
+
+        var subidas = subirImagenes(nuevos);
+        try {
+            productoDAO.actualizar(id, productoMapper.aCambiosProducto(dto, estado, existencias, urls(subidas)));
+        } catch (RuntimeException | Error e) {
+            if (!enTransaccion()) subidas.forEach(this::retirarImagen);
+            if (e instanceof IllegalArgumentException || e instanceof DatosCatalogoInvalidosException) throw invalido(e.getMessage());
+            throw e;
+        }
+        // Un archivo quitado solo se borra de Storage si ya ningún producto lo usa y lo subió el backend.
+        var rutas = quitadas.stream().filter(url -> !productoDAO.imagenEnUso(url))
+                .map(almacenImagenes::rutaDe).flatMap(Optional::stream).toList();
+        retirarAlConfirmar(rutas);
+        return productoMapper.aProductoEdicionDTO(producto, conPedidos);
+    }
+
+    private void validarDatosEdicion(EditarProductoDTO dto) {
+        if (dto == null || vacio(dto.clave()) || vacio(dto.nombre()) || vacio(dto.descripcion()))
+            throw invalido("Clave, nombre y descripción son obligatorios");
+        ProductoMapper.id(dto.idSubcategoria());
+        ProductoMapper.id(dto.idMarca());
+        if (!Set.of("PUBLICADO", "BORRADOR", "INACTIVO", "STOCK_BAJO").contains(dto.estado() == null ? "" : dto.estado()))
+            throw invalido("Estado de producto inválido");
+    }
+
+    /** Variantes que ya existen (por id, solo cambia la existencia) y nuevas (talla y color), sin repetir. */
+    private void validarVariantesEdicion(List<VarianteEdicionDTO> variantes) {
+        if (variantes == null || variantes.isEmpty()) throw invalido("Debe existir al menos una variante");
+        var ids = new HashSet<Long>();
+        var combinaciones = new HashSet<List<String>>();
+        for (var v : variantes) {
+            if (v == null || v.stock() == null || v.stock() < 0) throw invalido("La existencia debe ser un número no negativo");
+            if (!vacio(v.idVariante())) {
+                if (!ids.add(ProductoMapper.id(v.idVariante()))) throw invalido("No se permiten variantes repetidas");
+            } else {
+                if (vacio(v.talla()) || vacio(v.color())) throw invalido("Talla, color y stock no negativo son obligatorios");
+                if (!combinaciones.add(List.of(normal(v.talla()), normal(v.color())))) throw invalido("No se permiten variantes repetidas");
+            }
+        }
+    }
+
+    /**
+     * Existencia final de cada variante que se conserva. Las que se quitan y están en un carrito o pedido
+     * se conservan con existencia 0 (no se pueden borrar).
+     */
+    private Map<Long, Integer> existencias(Producto producto, List<VarianteEdicionDTO> pedidas, Set<Long> conPedidos) {
+        var actuales = new LinkedHashMap<Long, VarianteProducto>();
+        producto.getVariantes().forEach(v -> actuales.put(v.getId(), v));
+        var existencias = new LinkedHashMap<Long, Integer>();
+        for (var v : pedidas) {
+            if (vacio(v.idVariante())) continue;
+            var actual = actuales.get(ProductoMapper.id(v.idVariante()));
+            if (actual == null) throw invalido("La variante " + v.idVariante().trim() + " no pertenece al producto");
+            if (!vacio(v.color()) && !normal(v.color()).equals(normal(actual.getColor().getNombreColor()))
+                    || !vacio(v.talla()) && !normal(v.talla()).equals(normal(etiqueta(actual))))
+                throw invalido("Para cambiar el color o la talla quita la variante y agrega otra");
+            existencias.put(actual.getId(), v.stock());
+        }
+        for (var id : actuales.keySet()) {
+            if (!existencias.containsKey(id) && conPedidos.contains(id)) existencias.put(id, 0);
+        }
+        // Una variante nueva no puede repetir color y talla de una que se queda.
+        for (var v : pedidas) {
+            if (!vacio(v.idVariante())) continue;
+            boolean repetida = existencias.keySet().stream().map(actuales::get)
+                    .anyMatch(a -> normal(etiqueta(a)).equals(normal(v.talla())) && normal(a.getColor().getNombreColor()).equals(normal(v.color())));
+            if (repetida) throw invalido("La variante " + v.color().trim() + " / " + v.talla().trim() + " ya existe");
+        }
+        return existencias;
+    }
+
+    /** Colores de las variantes que quedan a la venta (las que se conservan por pedidos no cuentan). */
+    private Map<String, String> coloresActivos(Producto producto, List<VarianteEdicionDTO> pedidas) {
+        var porId = new HashMap<Long, String>();
+        producto.getVariantes().forEach(v -> porId.put(v.getId(), v.getColor().getNombreColor()));
+        return coloresDe(pedidas.stream().map(v -> vacio(v.idVariante()) ? v.color() : porId.get(ProductoMapper.id(v.idVariante()))).toList());
+    }
+
+    private List<String> imagenesQuitadas(Producto producto, List<ImagenColorDTO> pedidas) {
+        var conservadas = new HashSet<Long>();
+        for (var i : pedidas) if (!vacio(i.idImagen())) conservadas.add(ProductoMapper.id(i.idImagen()));
+        var propias = producto.getImagenes().stream().map(ImagenProducto::getId).collect(java.util.stream.Collectors.toSet());
+        for (var id : conservadas) if (!propias.contains(id)) throw invalido("La imagen " + id + " no pertenece al producto");
+        return producto.getImagenes().stream().filter(i -> !conservadas.contains(i.getId()))
+                .map(ImagenProducto::getUrlImagen).filter(Objects::nonNull).distinct().toList();
+    }
+
+    // ===== Imágenes ligadas a color =====
+
+    /**
+     * Cada imagen dice su color y un solo origen: archivo (posición en la parte «imagenes»), url o,
+     * al editar, idImagen. Todos los archivos deben estar en la lista y usarse una sola vez.
+     */
+    private void validarOrigenImagenes(List<ImagenColorDTO> imagenes, List<ArchivoImagen> archivos, boolean edicion) {
+        if (imagenes == null || imagenes.isEmpty()) throw invalido("El producto debe tener imágenes");
+        if (archivos.size() > ArchivoImagen.MAX_POR_PETICION)
+            throw invalido("Sube máximo " + ArchivoImagen.MAX_POR_PETICION + " imágenes por vez");
+        var usados = new HashSet<Integer>();
+        var guardadas = new HashSet<Long>();
+        for (var imagen : imagenes) {
+            if (imagen == null || vacio(imagen.color())) throw invalido("Cada imagen debe indicar el color al que pertenece");
+            int origenes = (vacio(imagen.idImagen()) ? 0 : 1) + (vacio(imagen.url()) ? 0 : 1) + (imagen.archivo() == null ? 0 : 1);
+            if (origenes != 1) throw invalido("Cada imagen debe indicar un solo origen: archivo, url o idImagen");
+            if (!vacio(imagen.idImagen())) {
+                if (!edicion) throw invalido("Un producto nuevo no tiene imágenes guardadas: usa archivo o url");
+                if (!guardadas.add(ProductoMapper.id(imagen.idImagen()))) throw invalido("No se permiten imágenes repetidas");
+            } else if (!vacio(imagen.url())) {
+                validarUrls(List.of(imagen.url()));
+            } else if (imagen.archivo() < 0 || imagen.archivo() >= archivos.size() || !usados.add(imagen.archivo())) {
+                throw invalido("Cada archivo de imagen debe aparecer una sola vez en la lista de imágenes");
+            }
+        }
+        if (usados.size() != archivos.size()) throw invalido("Hay archivos de imagen que no están en la lista de imágenes");
+        archivos.forEach(this::validarImagen);
+    }
+
+    /** Las imágenes son de colores de las variantes y cada color tiene al menos una. */
+    private void validarColoresDeImagenes(List<ImagenColorDTO> imagenes, Map<String, String> colores) {
+        var conImagen = new HashSet<String>();
+        for (var imagen : imagenes) {
+            var color = normal(imagen.color());
+            if (!colores.containsKey(color))
+                throw invalido("La imagen de color «" + imagen.color().trim() + "» no corresponde a ninguna variante");
+            conImagen.add(color);
+        }
+        for (var color : colores.entrySet()) {
+            if (!conImagen.contains(color.getKey())) throw invalido("Agrega al menos una imagen del color «" + color.getValue() + "»");
+        }
+    }
+
+    /** Colores sin repetir: nombre normalizado → como se escribió. */
+    private Map<String, String> coloresDe(List<String> nombres) {
+        var colores = new LinkedHashMap<String, String>();
+        for (var nombre : nombres) if (!vacio(nombre)) colores.putIfAbsent(normal(nombre), nombre.trim());
+        return colores;
+    }
+
+    /** Sube los archivos; si falla una subida o la transacción se revierte, retira los ya subidos. */
+    private List<ImagenAlmacenada> subirImagenes(List<ArchivoImagen> archivos) {
+        var subidas = new ArrayList<ImagenAlmacenada>();
+        try {
+            for (var archivo : archivos) subidas.add(almacenImagenes.subir(archivo));
+        } catch (RuntimeException e) {
+            subidas.forEach(this::retirarImagen);
+            throw e;
+        }
+        if (!subidas.isEmpty() && enTransaccion()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCompletion(int estado) {
+                    if (estado == STATUS_ROLLED_BACK) subidas.forEach(ProductoBO.this::retirarImagen);
+                    else if (estado != STATUS_COMMITTED)
+                        subidas.forEach(i -> logger.warn("Resultado de transacción desconocido; conservar imagen {} para reconciliar", i.ruta()));
+                }
+            });
+        }
+        return subidas;
+    }
+
+    /** Borra de Storage cuando la transacción se confirma (si se revierte, las imágenes se quedan). */
+    private void retirarAlConfirmar(List<String> rutas) {
+        if (rutas.isEmpty()) return;
+        if (!enTransaccion()) { rutas.forEach(this::retirarRuta); return; }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() { rutas.forEach(ProductoBO.this::retirarRuta); }
+        });
+    }
+
+    private static boolean enTransaccion() {
+        return TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive();
+    }
+
+    private static List<String> urls(List<ImagenAlmacenada> subidas) {
+        return subidas.stream().map(ImagenAlmacenada::url).toList();
+    }
+
     private void retirarImagen(ImagenAlmacenada imagen) {
-        try { almacenImagenes.eliminar(imagen.ruta()); }
-        catch (RuntimeException e) { logger.error("No se pudo retirar la imagen {} tras fallar el alta; requiere limpieza", imagen.ruta()); }
+        retirarRuta(imagen.ruta());
+    }
+
+    private void retirarRuta(String ruta) {
+        try { almacenImagenes.eliminar(ruta); }
+        catch (RuntimeException e) { logger.error("No se pudo retirar la imagen {} de Storage; requiere limpieza", ruta); }
     }
 
     private void validarImagen(ArchivoImagen imagen) {
@@ -156,7 +362,8 @@ public class ProductoBO implements IProductoBO {
         validarDatosProducto(dto);
         validarStock(dto.variantes());
         validarCoherenciaPrecios(dto.preciosProducto());
-        validarUrls(dto.imagenes());
+        validarOrigenImagenes(dto.imagenes(), List.of(), false);
+        validarColoresDeImagenes(dto.imagenes(), coloresDe(dto.variantes().stream().map(VarianteDTO::color).toList()));
     }
 
     private void validarDatosProducto(CrearProductoDTO dto) {
@@ -250,6 +457,18 @@ public class ProductoBO implements IProductoBO {
 
     private boolean vacio(String valor) {
         return valor == null || valor.isBlank();
+    }
+
+    private static String normal(String valor) {
+        return valor == null ? "" : valor.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String etiqueta(VarianteProducto variante) {
+        return variante.getTalla() == null ? "" : variante.getTalla().getEtiqueta();
+    }
+
+    private NegocioException productoNoEncontrado() {
+        return new NegocioException(TipoError.RECURSO_NO_ENCONTRADO, "Producto no encontrado");
     }
 
     private NegocioException invalido(String mensaje) {

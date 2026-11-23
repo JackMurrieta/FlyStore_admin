@@ -9,6 +9,7 @@ import com.flystore.persistencia.consultas.OrdenCatalogo;
 import com.flystore.persistencia.consultas.PaginaProductos;
 import com.flystore.persistencia.dao.interfaces.*;
 import com.flystore.persistencia.entidades.*;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +78,7 @@ public class CatalogoBO implements ICatalogoBO {
         var filtro = aFiltroCatalogo(categoria.getId(), peticion, tipoPrecio);
 
         var resultado = productoDAO.buscarEnTienda(filtro, pagina * TAMANO_PAGINA, TAMANO_PAGINA);
-        var productos = tarjetas(resultado, tipoPrecio);
+        var productos = tarjetas(resultado, tipoPrecio, filtro.colores());
         var opciones = catalogoBOMapper.aOpcionesFiltroRespuestaDTO(productoDAO.obtenerOpcionesFiltro(filtro.soloLinea()));
         var sugerencias = resultado.total() == 0 && filtro.tieneTexto() && pagina == 0
                 ? sugerencias(filtro, tipoPrecio) : List.<ProductoTarjetaDTO>of();
@@ -97,7 +98,7 @@ public class CatalogoBO implements ICatalogoBO {
         var filtro = aFiltroCatalogo(categoria == null ? null : categoria.getId(), peticion, tipoPrecio);
 
         var resultado = productoDAO.buscarEnTienda(filtro, pagina * TAMANO_PAGINA, TAMANO_PAGINA);
-        var productos = tarjetas(resultado, tipoPrecio);
+        var productos = tarjetas(resultado, tipoPrecio, filtro.colores());
         var opciones = catalogoBOMapper.aOpcionesFiltroRespuestaDTO(productoDAO.obtenerOpcionesFiltro(filtro.soloLinea()));
         var lineas = productoDAO.contarPorLinea(filtro.soloTexto());
         var sugerencias = resultado.total() == 0 && pagina == 0 ? sugerencias(filtro, tipoPrecio) : List.<ProductoTarjetaDTO>of();
@@ -180,14 +181,17 @@ public class CatalogoBO implements ICatalogoBO {
                 : new PaginaProductos(List.of(), 0);
         if (parciales.ids().isEmpty())
             parciales = productoDAO.buscarEnTienda(filtro.soloLinea().conOrden(OrdenCatalogo.MAS_VENDIDOS), 0, MAX_SUGERENCIAS);
-        return tarjetas(parciales, tipoPrecio);
+        return tarjetas(parciales, tipoPrecio, List.of());
     }
 
-    private List<ProductoTarjetaDTO> tarjetas(PaginaProductos pagina, TipoPrecio tipoPrecio) {
-        // Con variantes: la tarjeta muestra los colores con existencia y la foto de cada uno.
+    /**
+     * Con variantes: la tarjeta muestra los colores con existencia y la foto de cada uno. Si se buscó por
+     * color, la tarjeta abre en el color buscado (su foto y su cuadrito primero).
+     */
+    private List<ProductoTarjetaDTO> tarjetas(PaginaProductos pagina, TipoPrecio tipoPrecio, Collection<Long> coloresBuscados) {
         return productoDAO.obtenerParaTienda(pagina.ids(), true).stream()
                 .map(p -> catalogoBOMapper.aProductoTarjetaDTO(p, precioReferencia(nivelesPrecio(p), tipoPrecio).orElse(null),
-                        evaluadorStock::existencia))
+                        evaluadorStock::existencia, coloresBuscados))
                 .toList();
     }
 }

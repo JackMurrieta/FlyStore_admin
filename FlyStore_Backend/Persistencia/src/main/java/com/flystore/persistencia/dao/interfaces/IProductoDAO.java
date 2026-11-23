@@ -4,9 +4,11 @@ import com.flystore.persistencia.consultas.ConteoOpcion;
 import com.flystore.persistencia.consultas.FiltroCatalogo;
 import com.flystore.persistencia.consultas.OpcionesFiltroCatalogo;
 import com.flystore.persistencia.consultas.PaginaProductos;
+import com.flystore.persistencia.cambios.CambiosProducto;
 import com.flystore.persistencia.entidades.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 public interface IProductoDAO {
     List<Producto> obtenerTodos();
     List<Producto> buscar(String texto, Long idCategoria, Long idSubcategoria, Long idMarca, EstadoProducto estado);
@@ -16,6 +18,29 @@ public interface IProductoDAO {
     void guardar(Producto producto);
     void cambiarEstado(Long idProducto, EstadoProducto estado);
     void eliminar(Long idProducto);
+
+    // ===== CU-03 Editar producto =====
+
+    /**
+     * Producto bloqueado para editarlo, con línea, marca, variantes (color y talla), imágenes (color)
+     * y precios ya cargados.
+     */
+    Optional<Producto> obtenerParaEditar(Long idProducto);
+
+    /** Ids de las variantes del producto que están en algún carrito o pedido (no se pueden borrar). */
+    Set<Long> variantesConPedidos(Long idProducto);
+
+    /** Otro producto ya usa esta clave (sin distinguir mayúsculas ni espacios exteriores). */
+    boolean existeOtroConClave(String clave, Long idProducto);
+
+    /**
+     * Aplica la edición al producto obtenido con {@link #obtenerParaEditar}: valida y resuelve tipo,
+     * marca, tallas y colores (como en el alta) antes de cambiar nada, y quita lo que no viene.
+     */
+    void actualizar(Long idProducto, CambiosProducto cambios);
+
+    /** Alguna imagen de cualquier producto usa todavía esta URL (para no borrar archivos compartidos). */
+    boolean imagenEnUso(String url);
 
     // ===== CU-01 Consultar catálogo (tienda) =====
 

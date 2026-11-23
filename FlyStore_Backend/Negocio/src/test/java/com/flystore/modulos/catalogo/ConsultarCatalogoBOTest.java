@@ -174,6 +174,29 @@ class ConsultarCatalogoBOTest {
         assertNull(colores.get(1).imagenUrl(), "el gris no tiene foto propia: la tarjeta usa su color");
     }
 
+    @Test void conFiltroDeColorLaTarjetaAbreEnEseColor() {
+        var gorra = gorra(4L);
+        var negro = color(2L, "Negro", "#111111");
+        var rojo = color(4L, "Rojo", "#aa0000");
+        var foto = conId(new ImagenProducto(), 3L); foto.setUrlImagen("https://img/rojo.jpg"); foto.setOrden(2); foto.setColor(rojo);
+        gorra.getImagenes().add(foto);
+        gorra.setVariantes(new ArrayList<>(List.of(variante(41L, gorra, negro, null, 12), variante(43L, gorra, rojo, null, 5))));
+        productos.put(4L, gorra);
+        paginas.add(new PaginaProductos(List.of(4L), 1));
+        paginas.add(new PaginaProductos(List.of(4L), 1));
+
+        var filtrada = bo().consultarLinea("caps", new FiltrosCatalogoPeticionDTO(null, List.of(), List.of(), List.of(),
+                List.of(4L), List.of(), null, null, null, 0), null).productos().getFirst();
+        var normal = bo().consultarLinea("caps", null, null).productos().getFirst();
+
+        assertEquals(4L, filtrada.idColorDestacado());
+        assertEquals("https://img/rojo.jpg", filtrada.imagenUrl(), "la foto es la del color buscado");
+        assertEquals(List.of("Rojo", "Negro"), filtrada.colores().stream().map(c -> c.nombre()).toList());
+        assertNull(normal.idColorDestacado());
+        assertEquals("https://img/principal.jpg", normal.imagenUrl());
+        assertEquals(List.of("Negro", "Rojo"), normal.colores().stream().map(c -> c.nombre()).toList());
+    }
+
     // ===== S1 · Búsqueda en toda la tienda =====
 
     @Test void busquedaEnTodaLaTiendaCuentaPorLineaYNoExigeLinea() {

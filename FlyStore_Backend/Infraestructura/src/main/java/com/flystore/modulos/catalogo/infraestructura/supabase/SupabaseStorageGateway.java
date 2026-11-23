@@ -17,6 +17,8 @@ import java.util.*;
 @Component
 public class SupabaseStorageGateway implements IAlmacenImagenes {
     private static final Logger logger = LoggerFactory.getLogger(SupabaseStorageGateway.class);
+    /** Solo los archivos que sube el backend: catalogo/<uuid>.<extensión>. */
+    private static final String RUTA_PROPIA = "catalogo/[a-f0-9-]{36}\\.(jpg|png|webp)";
     private final SupabaseProperties properties;
     private final RestClient cliente;
 
@@ -70,7 +72,7 @@ public class SupabaseStorageGateway implements IAlmacenImagenes {
     }
 
     @Override public void eliminar(String ruta) {
-        if (ruta == null || !ruta.matches("catalogo/[a-f0-9-]{36}\\.(jpg|png|webp)")) throw new IllegalArgumentException("Ruta de imagen inválida");
+        if (ruta == null || !ruta.matches(RUTA_PROPIA)) throw new IllegalArgumentException("Ruta de imagen inválida");
         try {
             cliente.method(HttpMethod.DELETE).uri("/storage/v1/object/{bucket}", properties.getStorageBucket())
                     .headers(h -> h.addAll(credenciales())).contentType(MediaType.APPLICATION_JSON)
@@ -78,5 +80,13 @@ public class SupabaseStorageGateway implements IAlmacenImagenes {
         } catch (RestClientException e) {
             throw new NegocioException(TipoError.SERVICIO_NO_DISPONIBLE, "No se pudo retirar la imagen de Storage");
         }
+    }
+
+    @Override public Optional<String> rutaDe(String url) {
+        if (url == null || properties.getUrl() == null || properties.getStorageBucket() == null) return Optional.empty();
+        String prefijo = properties.getUrl().replaceAll("/+$", "") + "/storage/v1/object/public/" + properties.getStorageBucket() + "/";
+        if (!url.startsWith(prefijo)) return Optional.empty();
+        String ruta = url.substring(prefijo.length());
+        return ruta.matches(RUTA_PROPIA) ? Optional.of(ruta) : Optional.empty();
     }
 }

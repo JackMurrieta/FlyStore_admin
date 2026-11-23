@@ -25,7 +25,7 @@ class CatalogoControllerTest {
     private Object[] filtrosRecibidos;
     private static final String ALTA = """
         {"clave":"P1","nombre":"Gorra","descripcion":"Gorra roja","idCategoria":"1","idSubcategoria":"2","idMarca":"3",
-         "imagenes":["https://example.com/gorra.jpg"],"estado":"PUBLICADO","variantes":[{"talla":"M","color":"Rojo","stock":3}],
+         "imagenes":[{"url":"https://example.com/gorra.jpg","color":"Rojo"}],"estado":"PUBLICADO","variantes":[{"talla":"M","color":"Rojo","stock":3}],
          "preciosProducto":[{"tipoPrecio":"BASE","precio":100.25,"minPiezas":1}]}
         """;
     @BeforeEach void preparar() {
@@ -61,6 +61,7 @@ class CatalogoControllerTest {
         assertEquals(1, guardado.get().getVariantes().size());
         assertEquals(1, guardado.get().getPrecios().size());
         assertEquals(1, guardado.get().getImagenes().size());
+        assertEquals("Rojo", guardado.get().getImagenes().get(0).getColor().getNombreColor());
     }
 
     @Test void datosInvalidosDan400YClaveDuplicada409SinGuardar() throws Exception {
@@ -111,14 +112,55 @@ class CatalogoControllerTest {
         var alta = MockMvcBuilders.standaloneSetup(new ProductoController(bo))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
         var metadata = new org.springframework.mock.web.MockMultipartFile("producto", "producto.json", "application/json",
-                ALTA.replace("\"imagenes\":[\"https://example.com/gorra.jpg\"],", "").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        var imagen = new org.springframework.mock.web.MockMultipartFile("imagen", "foto.png", "image/png",
+                ALTA.replace("{\"url\":\"https://example.com/gorra.jpg\",\"color\":\"Rojo\"}", "{\"archivo\":0,\"color\":\"Rojo\"}")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var imagen = new org.springframework.mock.web.MockMultipartFile("imagenes", "foto.png", "image/png",
                 new byte[]{(byte)137,80,78,71,13,10,26,10});
         alta.perform(multipart("/api/productos").file(metadata).file(imagen)).andExpect(status().isCreated());
         assertEquals("https://example.com/storage/test.png", guardado.get().getImagenes().get(0).getUrlImagen());
+        assertEquals("Rojo", guardado.get().getImagenes().get(0).getColor().getNombreColor());
         alta.perform(multipart("/api/productos").file(metadata)).andExpect(status().isBadRequest());
         alta.perform(multipart("/api/productos").file(metadata).file(new org.springframework.mock.web.MockMultipartFile(
-                "imagen", "foto.png", "image/png", new byte[]{1,2,3}))).andExpect(status().isBadRequest());
+                "imagenes", "foto.png", "image/png", new byte[]{1,2,3}))).andExpect(status().isBadRequest());
+        var once = multipart("/api/productos").file(metadata);
+        for (int i = 0; i < 11; i++) once.file(imagen);
+        alta.perform(once).andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Sube máximo 10 imágenes por vez"));
+    }
+
+    // ===== CU-03 S1 · Editar producto =====
+
+    private static final String EDICION = """
+        {"clave":"P1","nombre":"Gorra","descripcion":"Gorra roja","idSubcategoria":"2","idMarca":"3","estado":"BORRADOR",
+         "variantes":[{"idVariante":"40","stock":7},{"talla":"M","color":"Azul","stock":2}],
+         "preciosProducto":[{"tipoPrecio":"BASE","precio":100.25,"minPiezas":1}],
+         "imagenes":[{"idImagen":"55","color":"Rojo"},{"archivo":0,"color":"Azul"}]}
+        """;
+
+    @Test void editarCargaYGuardaPorJsonOMultipart() throws Exception {
+        var llamadas = new java.util.ArrayList<Object[]>();
+        var respuesta = new ProductoEdicionDTO("7", "P1", "Gorra", "Gorra roja", "1", "CAPS", "2", "9FORTY", "3", "New Era", "BORRADOR",
+                List.of(new VarianteAdminDTO("40", "SKU", "5", "M", "1", "Rojo", "#D62828", 7, true)), List.of(),
+                List.of(new ImagenAdminDTO("55", "https://cdn/rojo.png", "1", "Rojo", 0)));
+        var bo = puerto(IProductoBO.class, (m,a) -> { llamadas.add(new Object[]{m, a}); return respuesta; });
+        var api = MockMvcBuilders.standaloneSetup(new ProductoController(bo)).setControllerAdvice(new GlobalExceptionHandler()).build();
+
+        api.perform(get("/api/productos/7")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.variantes[0].conPedidos").value(true)).andExpect(jsonPath("$.imagenes[0].color").value("Rojo"));
+        api.perform(put("/api/productos/7").contentType("application/json").content(EDICION.replace(",{\"archivo\":0,\"color\":\"Azul\"}", "")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.idProducto").value("7"));
+        var producto = new org.springframework.mock.web.MockMultipartFile("producto", "producto.json", "application/json",
+                EDICION.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var imagen = new org.springframework.mock.web.MockMultipartFile("imagenes", "azul.png", "image/png", new byte[]{(byte)137,80,78,71,13,10,26,10});
+        api.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/productos/7").file(producto).file(imagen)).andExpect(status().isOk());
+
+        assertEquals(List.of("obtenerProductoParaEditar", "editarProducto", "editarProducto"), llamadas.stream().map(l -> l[0]).toList());
+        assertEquals(List.of(), ((Object[]) llamadas.get(1)[1])[2], "por JSON no hay archivos");
+        var dto = (EditarProductoDTO) ((Object[]) llamadas.get(2)[1])[1];
+        assertEquals("40", dto.variantes().get(0).idVariante());
+        assertEquals(0, dto.imagenes().get(1).archivo());
+        assertEquals(1, ((List<?>) ((Object[]) llamadas.get(2)[1])[2]).size());
+        api.perform(put("/api/productos/7").contentType("application/json").content(EDICION.replace("\"stock\":7", "\"stock\":-7")))
+                .andExpect(status().isBadRequest());
     }
     @Test void validacionDeCatalogoAtravesDelProxyDePersistenciaDevuelve400() throws Exception {
         var dao = puerto(IProductoDAO.class, (m,a) -> {

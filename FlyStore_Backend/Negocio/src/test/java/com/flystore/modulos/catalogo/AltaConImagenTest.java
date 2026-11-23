@@ -19,7 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class AltaConImagenTest {
     private final ArchivoImagen png = new ArchivoImagen(new byte[]{(byte)137,80,78,71,13,10,26,10}, "image/png");
     private CrearProductoDTO dto() {
-        return new CrearProductoDTO("NUEVO", "Gorra", "Gorra roja", "1", "2", "3", null, "BORRADOR",
+        return new CrearProductoDTO("NUEVO", "Gorra", "Gorra roja", "1", "2", "3",
+                List.of(new ImagenColorDTO(null, null, 0, "Rojo")), "BORRADOR",
                 List.of(new VarianteDTO("M", "Rojo", 1)), List.of(new PrecioProductoDTO("BASE", BigDecimal.TEN, 1)));
     }
     private final ImagenAlmacenada subida = new ImagenAlmacenada("catalogo/objeto.png", "https://proyecto.supabase.co/storage/v1/object/public/productos/catalogo/objeto.png");
@@ -32,7 +33,7 @@ class AltaConImagenTest {
             if (m.equals("existePorClave")) return false;
             guardado.set((Producto)a[0]); return null;
         }), id -> false, new ProductoMapper(), puerto(IAlmacenImagenes.class, (m,a) -> { acciones.add(m); return subida; }));
-        bo.crearProductoConImagen(dto(), png);
+        bo.crearProductoConImagenes(dto(), List.of(png));
         assertEquals(List.of("existePorClave", "subir", "guardar"), acciones);
         assertEquals(subida.url(), guardado.get().getImagenes().getFirst().getUrlImagen());
     }
@@ -43,14 +44,14 @@ class AltaConImagenTest {
         for (var imagen : List.of(new ArchivoImagen(new byte[0], "image/png"),
                 new ArchivoImagen("<svg/>".getBytes(), "image/png"),
                 new ArchivoImagen(new byte[ArchivoImagen.MAX_BYTES + 1], "image/png"))) {
-            assertEquals(TipoError.DATOS_INVALIDOS, assertThrows(NegocioException.class, () -> bo.crearProductoConImagen(dto(), imagen)).getTipoError());
+            assertEquals(TipoError.DATOS_INVALIDOS, assertThrows(NegocioException.class, () -> bo.crearProductoConImagenes(dto(), List.of(imagen))).getTipoError());
         }
     }
 
     @Test void duplicadoNoSubeArchivos() {
         var bo = new ProductoBO(puerto(IProductoDAO.class, (m,a) -> true), id -> false, new ProductoMapper(),
                 puerto(IAlmacenImagenes.class, (m,a) -> { throw new AssertionError("No subir un duplicado"); }));
-        assertEquals(TipoError.RECURSO_YA_EXISTE, assertThrows(NegocioException.class, () -> bo.crearProductoConImagen(dto(), png)).getTipoError());
+        assertEquals(TipoError.RECURSO_YA_EXISTE, assertThrows(NegocioException.class, () -> bo.crearProductoConImagenes(dto(), List.of(png))).getTipoError());
     }
 
     @Test void falloDeGuardadoRetiraImagenYUnFalloDeLimpiezaNoOcultaElErrorPrincipal() {
@@ -62,7 +63,7 @@ class AltaConImagenTest {
             if (m.equals("subir")) return subida;
             assertEquals(subida.ruta(), a[0]); eliminada.set(true); throw new IllegalStateException("Storage no disponible");
         }));
-        var error = assertThrows(NegocioException.class, () -> bo.crearProductoConImagen(dto(), png));
+        var error = assertThrows(NegocioException.class, () -> bo.crearProductoConImagenes(dto(), List.of(png)));
         assertEquals("Talla inválida", error.getMessage()); assertTrue(eliminada.get());
     }
 
@@ -77,7 +78,7 @@ class AltaConImagenTest {
             TransactionSynchronizationManager.initSynchronization();
             TransactionSynchronizationManager.setActualTransactionActive(true);
             try {
-                bo.crearProductoConImagen(dto(), png);
+                bo.crearProductoConImagenes(dto(), List.of(png));
                 assertEquals(0, eliminadas.get());
                 TransactionSynchronizationManager.getSynchronizations().forEach(s -> s.afterCompletion(estado));
                 assertEquals(estado == TransactionSynchronization.STATUS_ROLLED_BACK ? 1 : 0, eliminadas.get());
