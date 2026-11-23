@@ -2,7 +2,6 @@ package com.flystore.modulos.gestionarventa.presentacion;
 
 import com.flystore.contratos.administrarpedidos.ActualizarEstadoPeticionDTO;
 import com.flystore.contratos.administrarpedidos.BuscarPedidosPeticionDTO;
-import com.flystore.contratos.administrarpedidos.CancelarPedidoPeticionDTO;
 import com.flystore.contratos.administrarpedidos.DetallePedidoAdminDTO;
 import com.flystore.contratos.administrarpedidos.PaginaPedidosDTO;
 import com.flystore.contratos.administrarpedidos.RechazarComprobantePeticionDTO;
@@ -60,7 +59,7 @@ public class AdministrarPedidosController {
         return ResponseEntity.ok(pedidoVentaBO.registrarPagoEfectivo(folio, peticion.montoRecibido(), adminId(sesion)));
     }
 
-    /** Comprobante correcto: descuenta el stock y pasa el pedido a PAGADO. */
+    /** Comprobante correcto: descuenta el stock y pasa el pedido a PREPARACION. */
     @PostMapping("/{folio}/aprobar-pago")
     public ResponseEntity<ResultadoAccionDTO> aprobarPago(@PathVariable String folio, Authentication sesion) {
         return ResponseEntity.ok(pedidoVentaBO.aprobarPago(folio, adminId(sesion)));
@@ -73,19 +72,12 @@ public class AdministrarPedidosController {
         return ResponseEntity.ok(pedidoVentaBO.rechazarComprobante(folio, peticion.motivo(), peticion.mensaje(), adminId(sesion)));
     }
 
-    /** Avanza el pedido: Pagado → Enviado → Entregado. */
+    /** Avanza el pedido un paso: efectivo Pagado → Entregado; transferencia En preparación → Enviado → Entregado. */
     @PatchMapping("/{folio}/estado")
     public ResponseEntity<ResultadoAccionDTO> actualizarEstado(@PathVariable String folio,
             @Valid @RequestBody ActualizarEstadoPeticionDTO peticion, Authentication sesion) {
         var envio = new DatosEnvio(peticion.paqueteria(), peticion.guia(), peticion.entregaLocal());
         return ResponseEntity.ok(pedidoVentaBO.actualizarEstado(folio, peticion.estado(), envio, adminId(sesion)));
-    }
-
-    /** Cancela un pedido que no ha salido de la tienda; si ya estaba pagado, repone el stock. */
-    @PostMapping("/{folio}/cancelar")
-    public ResponseEntity<ResultadoAccionDTO> cancelarPedido(@PathVariable String folio,
-            @Valid @RequestBody CancelarPedidoPeticionDTO peticion, Authentication sesion) {
-        return ResponseEntity.ok(pedidoVentaBO.cancelarPedido(folio, peticion.motivo(), adminId(sesion)));
     }
 
     /** Identificador de la sesión de quien ejecuta la acción (el «sub» del JWT). */

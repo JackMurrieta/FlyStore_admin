@@ -75,16 +75,25 @@ public class PedidoVentaBO implements IPedidoVentaBO {
     private static final Pattern FOLIO = Pattern.compile("FLY-\\d{6,}");
     /** CU-04 · Un texto que empieza como folio se busca solo en el folio, sin consultar clientes. */
     private static final Pattern PARECE_FOLIO = Pattern.compile("(?i)fly[-\\d]*");
-    /** Recorrido que el personal avanza a mano una vez pagado el pedido. */
-    private static final Map<EstadoVenta, EstadoVenta> SIGUIENTE_ESTADO = Map.of(
-            EstadoVenta.PAGADO, EstadoVenta.ENVIADO,
+    /**
+     * Recorrido que el personal avanza a mano en un pedido cobrado en tienda: Pagado → Entregado.
+     * Enviado → Entregado queda para los pedidos en efectivo que se enviaron con la regla anterior.
+     */
+    private static final Map<EstadoVenta, EstadoVenta> SIGUIENTE_EFECTIVO = Map.of(
+            EstadoVenta.PAGADO, EstadoVenta.ENTREGADO,
+            EstadoVenta.ENVIADO, EstadoVenta.ENTREGADO);
+    /**
+     * Recorrido de un pedido por transferencia, que entra a En preparación al aprobar el pago:
+     * En preparación → Enviado → Entregado. Pagado → En preparación queda para las transferencias
+     * aprobadas con la regla anterior.
+     */
+    private static final Map<EstadoVenta, EstadoVenta> SIGUIENTE_TRANSFERENCIA = Map.of(
+            EstadoVenta.PAGADO, EstadoVenta.PREPARACION,
             EstadoVenta.PREPARACION, EstadoVenta.ENVIADO,
             EstadoVenta.ENVIADO, EstadoVenta.ENTREGADO);
-    /** Estados en los que el pedido todavía no sale de la tienda y se puede cancelar. */
-    private static final Set<EstadoVenta> CANCELABLES = EnumSet.of(EstadoVenta.APARTADO_PENDIENTE_PAGO,
-            EstadoVenta.PENDIENTE_COMPROBANTE, EstadoVenta.PAGO_EN_REVISION, EstadoVenta.PAGADO, EstadoVenta.PREPARACION);
-    /** Estados en los que el stock del pedido ya se descontó. */
-    private static final Set<EstadoVenta> CON_STOCK_DESCONTADO = EnumSet.of(EstadoVenta.PAGADO, EstadoVenta.PREPARACION);
+    /** Solo el cliente cancela, y solo mientras no ha pagado ni enviado su comprobante. */
+    private static final Set<EstadoVenta> CANCELABLES_POR_CLIENTE = Collections.unmodifiableSet(
+            EnumSet.of(EstadoVenta.APARTADO_PENDIENTE_PAGO, EstadoVenta.PENDIENTE_COMPROBANTE));
     /** Nombre de cada estado como lo ve el personal. */
     private static final Map<EstadoVenta, String> ETIQUETAS = Map.of(
             EstadoVenta.PENDIENTE, "En carrito",
@@ -299,6 +308,32 @@ public class PedidoVentaBO implements IPedidoVentaBO {
         return aPedidoVentaDTO(pedido);
     }
 
+    @Override
+    @Transactional
+    public PedidoVentaDTO cancelarPedidoCliente(Long clienteId, String folio, String motivo) {
+        var noEncontrado = new NegocioException(TipoError.NO_ENCONTRADO, "No encontramos ese pedido");
+        if (folio == null || !FOLIO.matcher(folio).matches()) throw noEncontrado;
+        var pedido = pedidoVentaDAO.bloquearPorFolio(folio)
+                .filter(p -> p.getCliente().getId().equals(clienteId) && p.getEstadoVenta() != EstadoVenta.PENDIENTE)
+                .orElseThrow(() -> noEncontrado);
+        var anterior = pedido.getEstadoVenta();
+        if (anterior == EstadoVenta.CANCELADO || anterior == EstadoVenta.CANCELADO_VENCIMIENTO)
+            throw new NegocioException(TipoError.CONFLICTO_DE_DATOS, "Este pedido ya está cancelado.");
+        // Vencido aunque la tarea de vencimiento aún no lo haya cancelado: el cliente ya lo ve así.
+        if (estaVencido(pedido, OffsetDateTime.now(reloj)))
+            throw new NegocioException(TipoError.CONFLICTO_DE_DATOS, "El plazo para pagar este pedido ya terminó y se cancela solo.");
+        if (!CANCELABLES_POR_CLIENTE.contains(anterior))
+            throw new NegocioException(TipoError.CONFLICTO_DE_DATOS,
+                    "Este pedido ya no se puede cancelar: solo se cancela mientras está apartado o esperando tu comprobante.");
+        // El stock no se toca (se descuenta hasta que el pago se confirma); el código vuelve a estar disponible.
+        codigoDescuentoBO.liberarUso(detallePedidoBO.obtenerCodigosAplicados(pedido));
+        pedido.setEstadoVenta(EstadoVenta.CANCELADO);
+        pedidoVentaDAO.guardarPedidoVenta(pedido);
+        historialPedidoBO.registrarCambioDelCliente(pedido, anterior, tieneTexto(motivo) ? motivo.trim() : null);
+        logger.info("Pedido {} cancelado por el cliente", folio);
+        return aPedidoVentaDTO(pedido);
+    }
+
     // ===== Consultas de pedidos registrados =====
 
     @Override
@@ -413,7 +448,8 @@ public class PedidoVentaBO implements IPedidoVentaBO {
             varianteProductoBO.descontarExistencia(pedido);
             transferencia.setEstadoPago(EstadoPago.COMPLETADO);
             transferencia.setFechaPago(LocalDate.now(reloj));
-            cambiarEstado(pedido, EstadoVenta.PAGADO, adminId, null);
+            // Una transferencia aprobada entra directo a preparación para enviarse.
+            cambiarEstado(pedido, EstadoVenta.PREPARACION, adminId, null);
             return resultadoAccion(pedido, mensajePagoValidado(pedido));
         });
     }
@@ -442,7 +478,7 @@ public class PedidoVentaBO implements IPedidoVentaBO {
         var nuevo = estadoValido(estado);
         return ejecutarAccion(() -> {
             var pedido = bloquearRegistrado(folio);
-            validarTransicion(pedido.getEstadoVenta(), nuevo);
+            validarTransicion(pedido, nuevo);
             validarDatosEnvio(nuevo, envio);
             if (nuevo == EstadoVenta.ENVIADO) {
                 // Con entrega local no hay paquetería ni guía.
@@ -452,26 +488,6 @@ public class PedidoVentaBO implements IPedidoVentaBO {
             }
             cambiarEstado(pedido, nuevo, adminId, null);
             return resultadoAccion(pedido, mensajeCambioEstado(pedido));
-        });
-    }
-
-    @Override
-    public ResultadoAccionDTO cancelarPedido(String folio, String motivo, UUID adminId) {
-        var motivoLimpio = motivoObligatorio(motivo, "Indica el motivo de la cancelación.");
-        return ejecutarAccion(() -> {
-            var pedido = bloquearRegistrado(folio);
-            var estado = pedido.getEstadoVenta();
-            if (!puedeCancelarse(estado))
-                throw new NegocioException(TipoError.CONFLICTO_DE_DATOS,
-                        estado == EstadoVenta.CANCELADO || estado == EstadoVenta.CANCELADO_VENCIMIENTO
-                                ? "El pedido ya está cancelado."
-                                : "El pedido ya salió de la tienda y no se puede cancelar.");
-            // Solo un pedido ya pagado tiene piezas descontadas que devolver al inventario.
-            if (CON_STOCK_DESCONTADO.contains(estado)) varianteProductoBO.reponerExistencia(pedido);
-            // Igual que al vencer: el código de descuento vuelve a estar disponible.
-            codigoDescuentoBO.liberarUso(detallePedidoBO.obtenerCodigosAplicados(pedido));
-            cambiarEstado(pedido, EstadoVenta.CANCELADO, adminId, motivoLimpio);
-            return resultadoAccion(pedido, mensajeCancelacion(pedido, motivoLimpio));
         });
     }
 
@@ -529,9 +545,19 @@ public class PedidoVentaBO implements IPedidoVentaBO {
                     + etiqueta(esperado) + "»: ahora está en «" + etiqueta(pedido.getEstadoVenta()) + "». Vuelve a cargarlo.");
     }
 
-    /** CU-04 · Lanza CONFLICTO_DE_DATOS si el cambio se salta la secuencia Pagado → Enviado → Entregado. */
-    void validarTransicion(EstadoVenta actual, EstadoVenta nuevo) {
-        var siguiente = SIGUIENTE_ESTADO.get(actual);
+    /**
+     * CU-04 · Estado al que el personal puede avanzar el pedido; null si ya no admite cambios. En
+     * efectivo: Pagado → Entregado. Por transferencia: En preparación → Enviado → Entregado.
+     */
+    EstadoVenta siguienteEstado(PedidoVenta pedido) {
+        var recorrido = pago(pedido) instanceof PagoTransferencia ? SIGUIENTE_TRANSFERENCIA : SIGUIENTE_EFECTIVO;
+        return recorrido.get(pedido.getEstadoVenta());
+    }
+
+    /** CU-04 · Lanza CONFLICTO_DE_DATOS si el cambio se sale del recorrido de su forma de pago. */
+    void validarTransicion(PedidoVenta pedido, EstadoVenta nuevo) {
+        var actual = pedido.getEstadoVenta();
+        var siguiente = siguienteEstado(pedido);
         if (siguiente == null)
             throw new NegocioException(TipoError.CONFLICTO_DE_DATOS,
                     "Un pedido en «" + etiqueta(actual) + "» no admite cambio de estado.");
@@ -546,10 +572,6 @@ public class PedidoVentaBO implements IPedidoVentaBO {
             throw new NegocioException(TipoError.DATOS_INVALIDOS, "Indica paquetería y número de guía, o marca entrega local.");
     }
 
-    /** CU-04 · Un pedido se puede cancelar mientras no haya salido de la tienda ni esté ya cancelado. */
-    boolean puedeCancelarse(EstadoVenta estado) {
-        return CANCELABLES.contains(estado);
-    }
 
     /** Totales del pedido con los precios ya guardados en sus líneas. */
     TotalesPedido calcularTotales(PedidoVenta pedido) {
@@ -596,7 +618,8 @@ public class PedidoVentaBO implements IPedidoVentaBO {
     // ===== Avisos al cliente (CU-04) =====
 
     String mensajePagoValidado(PedidoVenta pedido) {
-        return saludo(pedido) + " Confirmamos el pago de tu pedido " + pedido.getFolio() + ". ¡Gracias por tu compra!";
+        return saludo(pedido) + " Confirmamos el pago de tu pedido " + pedido.getFolio()
+                + " y ya lo estamos preparando. ¡Gracias por tu compra!";
     }
 
     /** {@code mensaje} es el texto opcional que escribió el personal; puede ser null. */
@@ -608,18 +631,16 @@ public class PedidoVentaBO implements IPedidoVentaBO {
                 .append(" para conservar tu apartado.").toString();
     }
 
-    /** Aviso de ENVIADO (con paquetería y guía, o entrega local) o de ENTREGADO. */
+    /** Aviso de EN PREPARACIÓN, de ENVIADO (con paquetería y guía, o entrega local) o de ENTREGADO. */
     String mensajeCambioEstado(PedidoVenta pedido) {
         var inicio = saludo(pedido);
+        if (pedido.getEstadoVenta() == EstadoVenta.PREPARACION)
+            return inicio + " Ya estamos preparando tu pedido " + pedido.getFolio() + ".";
         if (pedido.getEstadoVenta() == EstadoVenta.ENTREGADO)
             return inicio + " Registramos la entrega de tu pedido " + pedido.getFolio() + ". ¡Gracias por tu compra!";
         if (pedido.getGuia() == null || Boolean.TRUE.equals(pedido.getEntregaLocal()))
             return inicio + " Ya salió tu pedido " + pedido.getFolio() + " y te lo entregaremos de forma local.";
         return inicio + " Ya enviamos tu pedido " + pedido.getFolio() + " por " + pedido.getPaqueteria() + ", guía " + pedido.getGuia() + ".";
-    }
-
-    String mensajeCancelacion(PedidoVenta pedido, String motivo) {
-        return saludo(pedido) + " Cancelamos tu pedido " + pedido.getFolio() + ": " + motivo.trim() + ".";
     }
 
     private static String saludo(PedidoVenta pedido) {

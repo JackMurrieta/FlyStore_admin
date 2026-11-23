@@ -121,11 +121,13 @@ class AdministrarPedidosControllerTest {
                         .content("{\"estado\": \"ENVIADO\", \"paqueteria\": null, \"guia\": null, \"entrega_local\": true}"))
                 .andExpect(status().isOk());
         assertEquals(new DatosEnvio(null, null, true), llamadas.get(4)[3]);
+    }
 
+    @Test void elPersonalYaNoTieneRutaParaCancelar() throws Exception {
         mvc.perform(post("/api/admin/pedidos/FLY-000128/cancelar").principal(SESION)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"motivo\": \"La clienta pidió cancelar\"}"))
-                .andExpect(status().isOk());
-        assertArrayEquals(new Object[]{"cancelarPedido", "FLY-000128", "La clienta pidió cancelar", UUID.fromString(ADMIN)}, llamadas.get(5));
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"motivo\": \"x\"}"))
+                .andExpect(status().is4xxClientError());
+        assertTrue(llamadas.isEmpty(), "Solo el cliente cancela, desde /api/ventas");
     }
 
     @Test void losErroresDeNegocioSeTraducenA404409Y400() throws Exception {
@@ -133,15 +135,14 @@ class AdministrarPedidosControllerTest {
         mvc.perform(get("/api/admin/pedidos/FLY-000999")).andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("NO_ENCONTRADO"))
                 .andExpect(jsonPath("$.message").value("No existe un pedido con ese folio."));
-        error = new NegocioException(TipoError.CONFLICTO_DE_DATOS, "El pedido ya está cancelado.");
-        mvc.perform(post("/api/admin/pedidos/FLY-000128/cancelar").principal(SESION)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"motivo\": \"x\"}"))
-                .andExpect(status().isConflict()).andExpect(jsonPath("$.message").value("El pedido ya está cancelado."));
+        error = new NegocioException(TipoError.CONFLICTO_DE_DATOS, "El pedido FLY-000128 ya no está en «Pago en revisión».");
+        mvc.perform(post("/api/admin/pedidos/FLY-000128/aprobar-pago").principal(SESION))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.message").value("El pedido FLY-000128 ya no está en «Pago en revisión»."));
         error = new NegocioException(TipoError.DATOS_INVALIDOS, "Indica paquetería y número de guía, o marca entrega local.");
         mvc.perform(patch("/api/admin/pedidos/FLY-000128/estado").principal(SESION)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"estado\": \"ENVIADO\"}"))
                 .andExpect(status().isBadRequest());
         error = null;
-        mvc.perform(post("/api/admin/pedidos/FLY-000128/cancelar").principal(SESION)).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/admin/pedidos/FLY-000128/rechazar-comprobante").principal(SESION)).andExpect(status().isBadRequest());
     }
 }

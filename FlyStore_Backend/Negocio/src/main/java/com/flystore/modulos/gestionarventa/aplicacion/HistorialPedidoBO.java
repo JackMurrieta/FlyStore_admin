@@ -38,7 +38,23 @@ public class HistorialPedidoBO implements IHistorialPedidoBO {
     @Override
     @Transactional
     public void registrarCambio(PedidoVenta pedido, EstadoVenta anterior, UUID usuarioAuthId, String motivo, boolean comprobanteRechazado) {
-        var usuario = nombreUsuario(usuarioAuthId);
+        guardar(pedido, anterior, nombreUsuario(usuarioAuthId), motivo, comprobanteRechazado);
+    }
+
+    @Override
+    @Transactional
+    public void registrarCambioDelCliente(PedidoVenta pedido, EstadoVenta anterior, String motivo) {
+        var nombre = nombreCompleto(pedido.getCliente());
+        guardar(pedido, anterior, (nombre.isEmpty() ? "Cliente" : nombre) + " (cliente)", motivo, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HistorialPedido> listarPorPedido(Long pedidoId) {
+        return historialPedidoDAO.listarPorPedido(pedidoId);
+    }
+
+    private void guardar(PedidoVenta pedido, EstadoVenta anterior, String usuario, String motivo, boolean comprobanteRechazado) {
         var entrada = new HistorialPedido();
         entrada.setPedidoVenta(pedido);
         entrada.setFechaHora(OffsetDateTime.now(reloj));
@@ -51,20 +67,19 @@ public class HistorialPedidoBO implements IHistorialPedidoBO {
         logger.info("Pedido {}: {} -> {} por {}", pedido.getFolio(), anterior, pedido.getEstadoVenta(), usuario);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<HistorialPedido> listarPorPedido(Long pedidoId) {
-        return historialPedidoDAO.listarPorPedido(pedidoId);
-    }
-
     /** Nombre y apellidos del administrador o empleado de la sesión. */
     String nombreUsuario(UUID authId) {
         if (authId == null) return USUARIO_DESCONOCIDO;
         Usuario usuario = adminBO.findByAuthId(authId).map(Usuario.class::cast)
                 .or(() -> empleadoBO.findByAuthId(authId).map(Usuario.class::cast)).orElse(null);
         if (usuario == null) return USUARIO_DESCONOCIDO;
-        var nombre = String.join(" ", Stream.of(usuario.getNombre(), usuario.getApellidos())
-                .filter(valor -> valor != null && !valor.isBlank()).map(String::trim).toList());
+        var nombre = nombreCompleto(usuario);
         return nombre.isEmpty() ? USUARIO_DESCONOCIDO : nombre;
+    }
+
+    private static String nombreCompleto(Usuario usuario) {
+        if (usuario == null) return "";
+        return String.join(" ", Stream.of(usuario.getNombre(), usuario.getApellidos())
+                .filter(valor -> valor != null && !valor.isBlank()).map(String::trim).toList());
     }
 }

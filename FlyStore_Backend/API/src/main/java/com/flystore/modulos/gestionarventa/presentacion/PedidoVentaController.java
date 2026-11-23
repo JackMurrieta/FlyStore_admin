@@ -14,8 +14,8 @@ import java.util.UUID;
 
 /**
  * Pedidos registrados. ADMIN y EMPLEADO ven todos; CLIENTE solo ve los suyos. Los carritos (pedidos
- * PENDIENTE) no aparecen aquí. Validar pagos, avanzar el estado y cancelar es CU-04 y vive en
- * AdministrarPedidosController (/api/admin/pedidos).
+ * PENDIENTE) no aparecen aquí. Validar pagos y avanzar el estado es CU-04 y vive en
+ * AdministrarPedidosController (/api/admin/pedidos); el cliente cancela en GestionarVentaController.
  */
 @RestController
 @RequestMapping("/api/pedidos")

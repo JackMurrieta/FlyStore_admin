@@ -66,16 +66,6 @@ public class VarianteProductoBO implements IVarianteProductoBO {
         });
     }
 
-    @Override
-    @Transactional
-    public void reponerExistencia(PedidoVenta pedido) {
-        piezasPorVariante(pedido).forEach((id, piezas) -> {
-            var variante = varianteProductoDAO.bloquearPorId(id)
-                    .orElseThrow(() -> new NegocioException(TipoError.NO_ENCONTRADO, "Un producto del pedido ya no existe"));
-            variante.setStock((variante.getStock() == null ? 0 : variante.getStock()) + piezas);
-        });
-    }
-
     /** Piezas por variante: cantidad de la línea × cantidad de la variante en el combo (1 en líneas simples). */
     private static Map<Long, Integer> piezasPorVariante(PedidoVenta pedido) {
         var piezas = new TreeMap<Long, Integer>();

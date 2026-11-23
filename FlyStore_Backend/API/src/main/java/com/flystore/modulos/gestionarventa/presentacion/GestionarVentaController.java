@@ -99,6 +99,16 @@ public class GestionarVentaController {
         return ResponseEntity.ok(pedidoVentaBO.registrarPedido(idCliente(sesion), peticion));
     }
 
+    /**
+     * El cliente cancela su pedido mientras está apartado o esperando comprobante. El cuerpo es
+     * opcional; solo lleva el motivo. 409 si ya se pagó, está en revisión, venció o ya está cancelado.
+     */
+    @PostMapping("/pedidos/{folio}/cancelar")
+    public ResponseEntity<PedidoVentaDTO> cancelarPedido(@PathVariable String folio,
+            @Valid @RequestBody(required = false) CancelarPedidoPeticionDTO peticion, Authentication sesion) {
+        return ResponseEntity.ok(pedidoVentaBO.cancelarPedidoCliente(idCliente(sesion), folio, peticion == null ? null : peticion.motivo()));
+    }
+
     /** Pedido registrado para el ticket que arma el frontend (sustituye al PDF del servidor). */
     @GetMapping("/pedidos/{folio}")
     public ResponseEntity<PedidoVentaDTO> obtenerPedidoRegistrado(@PathVariable String folio, Authentication sesion) {

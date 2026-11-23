@@ -232,7 +232,7 @@ class AdministrarPedidosTest {
         assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.obtenerDetallePedido("FLY-000999")));
         assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.obtenerDetallePedido("no-es-folio")));
         assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.obtenerDetallePedido("FLY-000130")), "El carrito de un cliente no es un pedido");
-        assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.cancelarPedido("FLY-000130", "prueba", ADMIN)));
+        assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.aprobarPago("FLY-000130", ADMIN)));
     }
 
     // ===== Back 2 · Registrar pago en efectivo =====
@@ -278,16 +278,16 @@ class AdministrarPedidosTest {
 
     // ===== Back 3 · Validar pago =====
 
-    @Test void aprobarDescuentaStockPasaAPagadoYAvisaAlCliente() {
+    @Test void aprobarDescuentaStockPasaAPreparacionYAvisaAlCliente() {
         var pedido = transferenciaEnRevision(2);
         var resultado = bo.aprobarPago("FLY-000128", ADMIN);
-        assertEquals("PAGADO", resultado.pedido().estado());
+        assertEquals("PREPARACION", resultado.pedido().estado(), "Una transferencia aprobada entra directo a preparación");
         assertEquals("COMPLETADO", resultado.pedido().comprobante().estado());
         assertEquals(6, gorra.getStock());
         assertEquals(EstadoPago.COMPLETADO, pedido.getPago().getEstadoPago());
         assertEquals(AHORA.toLocalDate(), pedido.getPago().getFechaPago());
         assertTrue(resultado.notificacionEnviada());
-        assertEquals(List.of("644 123 4567 | Hola Ana, te escribimos de FlyStore. Confirmamos el pago de tu pedido FLY-000128. ¡Gracias por tu compra!"), avisos);
+        assertEquals(List.of("644 123 4567 | Hola Ana, te escribimos de FlyStore. Confirmamos el pago de tu pedido FLY-000128 y ya lo estamos preparando. ¡Gracias por tu compra!"), avisos);
         assertEquals("PAGO_EN_REVISION", resultado.pedido().historial().get(0).estadoAnterior());
         assertNull(resultado.pedido().historial().get(0).motivo());
 
@@ -308,7 +308,7 @@ class AdministrarPedidosTest {
         transferenciaEnRevision(1);
         notificadorFalla = true;
         var resultado = bo.aprobarPago("FLY-000128", ADMIN);
-        assertEquals("PAGADO", resultado.pedido().estado());
+        assertEquals("PREPARACION", resultado.pedido().estado());
         assertFalse(resultado.notificacionEnviada());
 
         pedidos.clear();
@@ -365,9 +365,9 @@ class AdministrarPedidosTest {
         assertEquals(EstadoVenta.PENDIENTE_COMPROBANTE, pedido.getEstadoVenta());
     }
 
-    // ===== Back 4 · Actualizar estado y cancelar =====
+    // ===== Back 4 · Actualizar estado =====
 
-    @Test void elEstadoAvanzaEnSecuenciaYEnviadoExigeDatosDeEnvio() {
+    @Test void laTransferenciaAvanzaDePreparacionAEnviadoYEntregado() {
         var pedido = transferenciaEnRevision(1);
         bo.aprobarPago("FLY-000128", ADMIN);
         avisos.clear();
@@ -375,7 +375,7 @@ class AdministrarPedidosTest {
         assertEquals(TipoError.DATOS_INVALIDOS, errorDe(() -> bo.actualizarEstado("FLY-000128", "EN_CAMINO", null, ADMIN)));
         assertEquals(TipoError.DATOS_INVALIDOS, errorDe(() -> bo.actualizarEstado("FLY-000128", "ENVIADO", null, ADMIN)));
         assertEquals(TipoError.DATOS_INVALIDOS, errorDe(() -> bo.actualizarEstado("FLY-000128", "ENVIADO", new DatosEnvio("Estafeta", " ", false), ADMIN)));
-        assertEquals(EstadoVenta.PAGADO, pedido.getEstadoVenta());
+        assertEquals(EstadoVenta.PREPARACION, pedido.getEstadoVenta());
 
         var enviado = bo.actualizarEstado("FLY-000128", "enviado", new DatosEnvio(" Estafeta ", "7210 4455", false), ADMIN);
         assertEquals("ENVIADO", enviado.pedido().estado());
@@ -387,7 +387,7 @@ class AdministrarPedidosTest {
         var entregado = bo.actualizarEstado("FLY-000128", "ENTREGADO", null, ADMIN);
         assertEquals("ENTREGADO", entregado.pedido().estado());
         assertEquals("Estafeta", entregado.pedido().envio().paqueteria(), "El envío se conserva al entregar");
-        assertEquals(List.of("ENTREGADO", "ENVIADO", "PAGADO"), entregado.pedido().historial().stream().map(h -> h.estadoNuevo()).toList());
+        assertEquals(List.of("ENTREGADO", "ENVIADO", "PREPARACION"), entregado.pedido().historial().stream().map(h -> h.estadoNuevo()).toList());
         assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.actualizarEstado("FLY-000128", "ENTREGADO", null, ADMIN)));
         assertEquals(7, gorra.getStock(), "Avanzar el estado no vuelve a tocar el stock");
     }
@@ -402,35 +402,75 @@ class AdministrarPedidosTest {
         assertTrue(avisos.get(0).endsWith("te lo entregaremos de forma local."), avisos.get(0));
     }
 
-    @Test void cancelarUnPedidoPagadoReponeElStockYLiberaElCodigo() {
-        var pedido = transferenciaEnRevision(2);
-        bo.aprobarPago("FLY-000128", ADMIN);
-        assertEquals(6, gorra.getStock());
-        assertEquals(TipoError.DATOS_INVALIDOS, errorDe(() -> bo.cancelarPedido("FLY-000128", null, ADMIN)));
-        var resultado = bo.cancelarPedido("FLY-000128", "La clienta pidió cancelar", ADMIN);
-        assertEquals("CANCELADO", resultado.pedido().estado());
-        assertEquals(8, gorra.getStock());
-        assertEquals(1, codigosLiberados);
-        assertEquals("La clienta pidió cancelar", resultado.pedido().historial().get(0).motivo());
-        assertEquals("PAGADO", resultado.pedido().historial().get(0).estadoAnterior());
-        assertTrue(avisos.get(1).endsWith("Cancelamos tu pedido FLY-000128: La clienta pidió cancelar."), avisos.get(1));
-        assertEquals(EstadoVenta.CANCELADO, pedido.getEstadoVenta());
+    @Test void elEfectivoCobradoPasaDePagadoAEntregadoSinEnvio() {
+        apartadoEnEfectivo(1, AHORA.minusHours(2));
+        bo.registrarPagoEfectivo("FLY-000127", new BigDecimal("210"), ADMIN);
+        var error = assertThrows(NegocioException.class,
+                () -> bo.actualizarEstado("FLY-000127", "ENVIADO", new DatosEnvio("Estafeta", "123", false), ADMIN));
+        assertEquals(TipoError.CONFLICTO_DE_DATOS, error.getTipoError());
+        assertEquals("Desde «Pagado» solo se puede pasar a «Entregado».", error.getMessage());
+        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.actualizarEstado("FLY-000127", "PREPARACION", null, ADMIN)));
 
-        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.cancelarPedido("FLY-000128", "otra vez", ADMIN)));
-        assertEquals(8, gorra.getStock(), "Cancelar dos veces no repone dos veces");
+        var entregado = bo.actualizarEstado("FLY-000127", "ENTREGADO", null, ADMIN);
+        assertEquals("ENTREGADO", entregado.pedido().estado());
+        assertNull(entregado.pedido().envio());
+        assertEquals(List.of("ENTREGADO", "PAGADO"), entregado.pedido().historial().stream().map(h -> h.estadoNuevo()).toList());
+        assertTrue(avisos.get(0).endsWith("Registramos la entrega de tu pedido FLY-000127. ¡Gracias por tu compra!"), avisos.get(0));
     }
 
-    @Test void cancelarAntesDelPagoNoTocaElStockYEnviadoYaNoSeCancela() {
-        apartadoEnEfectivo(2, AHORA.minusHours(5));
-        var resultado = bo.cancelarPedido("FLY-000127", "No pasó a pagar", ADMIN);
-        assertEquals("CANCELADO", resultado.pedido().estado());
-        assertNull(resultado.pedido().fechaLimite());
-        assertEquals(8, gorra.getStock(), "Antes del pago no había piezas descontadas");
+    @Test void losPedidosDeLaReglaAnteriorTambienAvanzan() {
+        var transferencia = transferenciaEnRevision(1);
+        transferencia.setEstadoVenta(EstadoVenta.PAGADO);
+        var preparando = bo.actualizarEstado("FLY-000128", "PREPARACION", null, ADMIN);
+        assertEquals("PREPARACION", preparando.pedido().estado());
+        assertTrue(avisos.get(0).endsWith("Ya estamos preparando tu pedido FLY-000128."), avisos.get(0));
 
-        var enviado = transferenciaEnRevision(1);
-        enviado.setEstadoVenta(EstadoVenta.ENVIADO);
-        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.cancelarPedido("FLY-000128", "tarde", ADMIN)));
-        enviado.setEstadoVenta(EstadoVenta.CANCELADO_VENCIMIENTO);
-        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.cancelarPedido("FLY-000128", "tarde", ADMIN)));
+        var efectivo = apartadoEnEfectivo(1, AHORA.minusHours(2));
+        efectivo.setEstadoVenta(EstadoVenta.ENVIADO);
+        assertEquals("ENTREGADO", bo.actualizarEstado("FLY-000127", "ENTREGADO", null, ADMIN).pedido().estado());
+    }
+
+    // ===== Cancelación: solo el cliente, antes de pagar =====
+
+    @Test void elClienteCancelaSuApartadoYSeLiberaElCodigo() {
+        var pedido = apartadoEnEfectivo(2, AHORA.minusHours(5));
+        var cancelado = bo.cancelarPedidoCliente(7L, "FLY-000127", "  Ya no lo necesito ");
+        assertEquals("CANCELADO", cancelado.estadoVenta());
+        assertNull(cancelado.fechaLimitePago());
+        assertEquals(EstadoVenta.CANCELADO, pedido.getEstadoVenta());
+        assertEquals(1, codigosLiberados);
+        assertEquals(8, gorra.getStock(), "Antes del pago no había piezas descontadas");
+        var entrada = historial.get(0);
+        assertEquals("Ana Torres (cliente)", entrada.getUsuario());
+        assertEquals(EstadoVenta.APARTADO_PENDIENTE_PAGO, entrada.getEstadoAnterior());
+        assertEquals("Ya no lo necesito", entrada.getMotivo());
+        assertTrue(avisos.isEmpty(), "El propio cliente canceló: no se le avisa");
+
+        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.cancelarPedidoCliente(7L, "FLY-000127", null)));
+        assertEquals(1, codigosLiberados, "Cancelar dos veces no libera dos veces");
+    }
+
+    @Test void elClienteCancelaSinMotivoMientrasEsperaElComprobante() {
+        var pedido = transferenciaEnRevision(1);
+        pedido.setEstadoVenta(EstadoVenta.PENDIENTE_COMPROBANTE);
+        assertEquals("CANCELADO", bo.cancelarPedidoCliente(7L, "FLY-000128", "   ").estadoVenta());
+        assertNull(historial.get(0).getMotivo());
+    }
+
+    @Test void pagadoEnRevisionVencidoOAjenoNoSeCancelan() {
+        var enRevision = transferenciaEnRevision(1);
+        assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.cancelarPedidoCliente(99L, "FLY-000128", null)), "Un pedido ajeno es como si no existiera");
+        assertEquals(TipoError.NO_ENCONTRADO, errorDe(() -> bo.cancelarPedidoCliente(7L, "no-es-folio", null)));
+        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.cancelarPedidoCliente(7L, "FLY-000128", null)), "Con el comprobante en revisión ya no se cancela");
+        enRevision.setEstadoVenta(EstadoVenta.PREPARACION);
+        assertEquals(TipoError.CONFLICTO_DE_DATOS, errorDe(() -> bo.cancelarPedidoCliente(7L, "FLY-000128", null)), "Un pedido pagado no se cancela");
+
+        var vencido = apartadoEnEfectivo(1, AHORA.minusHours(43));
+        var error = assertThrows(NegocioException.class, () -> bo.cancelarPedidoCliente(7L, "FLY-000127", null));
+        assertEquals(TipoError.CONFLICTO_DE_DATOS, error.getTipoError());
+        assertTrue(error.getMessage().contains("se cancela solo"), error.getMessage());
+        assertEquals(EstadoVenta.APARTADO_PENDIENTE_PAGO, vencido.getEstadoVenta());
+        assertEquals(0, codigosLiberados);
+        assertTrue(historial.isEmpty());
     }
 }

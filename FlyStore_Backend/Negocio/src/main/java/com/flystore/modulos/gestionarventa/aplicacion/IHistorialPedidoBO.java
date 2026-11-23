@@ -22,6 +22,12 @@ public interface IHistorialPedidoBO {
      */
     void registrarCambio(PedidoVenta pedido, EstadoVenta anterior, UUID usuarioAuthId, String motivo, boolean comprobanteRechazado);
 
+    /**
+     * Deja constancia de un cambio que hizo el propio cliente (cancelar su pedido). Queda a nombre
+     * del cliente del pedido, marcado como «(cliente)».
+     */
+    void registrarCambioDelCliente(PedidoVenta pedido, EstadoVenta anterior, String motivo);
+
     /** Entradas del pedido, de la más reciente a la más antigua. */
     List<HistorialPedido> listarPorPedido(Long pedidoId);
 }
