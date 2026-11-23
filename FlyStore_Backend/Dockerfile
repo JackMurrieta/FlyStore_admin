@@ -29,6 +29,7 @@ COPY API/src API/src
 COPY DTOs/src DTOs/src
 COPY Negocio/src Negocio/src
 COPY Persistencia/src Persistencia/src
+COPY Persistencia/migraciones Persistencia/migraciones
 COPY Infraestructura/src Infraestructura/src
 
 # Compilar, verificar las capas y empaquetar el reactor completo.
