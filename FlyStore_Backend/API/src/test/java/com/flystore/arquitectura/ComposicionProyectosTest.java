@@ -37,7 +37,12 @@ class ComposicionProyectosTest {
                 Map.entry("com.flystore.modulos.gestionarventa.infraestructura.supabase.SupabaseComprobantesGateway", "Infraestructura"),
                 Map.entry("com.flystore.modulos.perfil.aplicacion.PerfilBO", "Negocio"),
                 Map.entry("com.flystore.modulos.perfil.aplicacion.mappers.PerfilMapper", "Negocio"),
-                Map.entry("com.flystore.modulos.perfil.presentacion.PerfilController", "API"));
+                Map.entry("com.flystore.modulos.perfil.presentacion.PerfilController", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.presentacion.AdministrarPedidosController", "API"),
+                Map.entry("com.flystore.modulos.gestionarventa.aplicacion.HistorialPedidoBO", "Negocio"),
+                Map.entry("com.flystore.modulos.gestionarventa.aplicacion.mappers.PedidoAdminMapper", "Negocio"),
+                Map.entry("com.flystore.persistencia.dao.HistorialPedidoDAO", "Persistencia"),
+                Map.entry("com.flystore.modulos.gestionarventa.infraestructura.whatsapp.NotificadorWhatsApp", "Infraestructura"));
         for (var entrada : esperados.entrySet()) {
             assertTrue(componentes.contains(entrada.getKey()), entrada.getKey());
             var origen = Class.forName(entrada.getKey()).getProtectionDomain().getCodeSource()

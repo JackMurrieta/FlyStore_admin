@@ -46,6 +46,23 @@ public class PedidoVenta {
     @Column(name = "comprobante_pedido_url")
     private String comprobantePedidoUrl;
 
+    /**
+     * CU-04 · Vencimiento propio del pedido. Solo se llena al rechazar un comprobante (42 h nuevas);
+     * si es null, el plazo corre desde fechaHoraPedido.
+     */
+    @Column(name = "fecha_limite_pago")
+    private OffsetDateTime fechaLimitePago;
+
+    /** CU-04 · Datos del envío, capturados al marcar el pedido como ENVIADO. */
+    @Column
+    private String paqueteria;
+
+    @Column
+    private String guia;
+
+    @Column(name = "entrega_local")
+    private Boolean entregaLocal;
+
     @OneToMany(mappedBy = "pedidoVenta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedido> detalles;
 
@@ -124,6 +141,36 @@ public class PedidoVenta {
     public void setDetalles(List<DetallePedido> detalles) {
         this.detalles = detalles;
     }
-    
-    
+
+    public OffsetDateTime getFechaLimitePago() {
+        return fechaLimitePago;
+    }
+
+    public void setFechaLimitePago(OffsetDateTime fechaLimitePago) {
+        this.fechaLimitePago = fechaLimitePago;
+    }
+
+    public String getPaqueteria() {
+        return paqueteria;
+    }
+
+    public void setPaqueteria(String paqueteria) {
+        this.paqueteria = paqueteria;
+    }
+
+    public String getGuia() {
+        return guia;
+    }
+
+    public void setGuia(String guia) {
+        this.guia = guia;
+    }
+
+    public Boolean getEntregaLocal() {
+        return entregaLocal;
+    }
+
+    public void setEntregaLocal(Boolean entregaLocal) {
+        this.entregaLocal = entregaLocal;
+    }
 }

@@ -1,9 +1,6 @@
 package com.flystore.modulos.gestionarventa.presentacion;
 
-import com.flystore.contratos.gestionarventa.ComprobanteUrlDTO;
-import com.flystore.contratos.gestionarventa.ConfirmarPagoPeticionDTO;
 import com.flystore.contratos.gestionarventa.PedidoVentaDTO;
-import jakarta.validation.Valid;
 import com.flystore.modulos.autenticacion.aplicacion.IClienteBO;
 import com.flystore.modulos.gestionarventa.aplicacion.IPedidoVentaBO;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +13,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Pedidos registrados. ADMIN y EMPLEADO ven todos y confirman pagos; CLIENTE solo ve los suyos.
- * Los carritos (pedidos PENDIENTE) no aparecen aquí.
+ * Pedidos registrados. ADMIN y EMPLEADO ven todos; CLIENTE solo ve los suyos. Los carritos (pedidos
+ * PENDIENTE) no aparecen aquí. Validar pagos, avanzar el estado y cancelar es CU-04 y vive en
+ * AdministrarPedidosController (/api/admin/pedidos).
  */
 @RestController
 @RequestMapping("/api/pedidos")
@@ -49,21 +47,6 @@ public class PedidoVentaController {
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
     public ResponseEntity<List<PedidoVentaDTO>> listarPorConfirmar() {
         return ResponseEntity.ok(pedidoVentaBO.listarPorConfirmar());
-    }
-
-    /** Comprobante revisado o efectivo recibido: descuenta el stock y pasa el pedido a PAGADO. */
-    @PostMapping("/{id}/confirmar-pago")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
-    public ResponseEntity<PedidoVentaDTO> confirmarPago(@PathVariable String id,
-            @Valid @RequestBody(required = false) ConfirmarPagoPeticionDTO peticion) {
-        return ResponseEntity.ok(pedidoVentaBO.confirmarPago(id, peticion));
-    }
-
-    /** Enlace temporal (5 min) al comprobante de transferencia del pedido. */
-    @GetMapping("/{id}/comprobante")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
-    public ResponseEntity<ComprobanteUrlDTO> obtenerComprobante(@PathVariable String id) {
-        return ResponseEntity.ok(pedidoVentaBO.obtenerUrlComprobante(id));
     }
 
     /** El personal no necesita id de cliente; un cliente siempre se resuelve desde la sesión. */

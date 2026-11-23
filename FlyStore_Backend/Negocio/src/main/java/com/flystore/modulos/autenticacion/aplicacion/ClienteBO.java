@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,6 +77,11 @@ public class ClienteBO implements IClienteBO {
         });
         if (datos.guardarComoPredeterminada()) cliente.setDireccionPredeterminada(resultado);
         return resultado;
+    }
+
+    @Override
+    public List<Long> buscarIdsPorNombreOTelefono(String texto) {
+        return clienteDAO.buscarPorNombreOTelefono(texto).stream().map(Cliente::getId).toList();
     }
 
     private Cliente cliente(Long clienteId) {

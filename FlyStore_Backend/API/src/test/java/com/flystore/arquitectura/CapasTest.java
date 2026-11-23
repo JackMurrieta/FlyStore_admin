@@ -81,7 +81,8 @@ class CapasTest {
                     if (pkg.startsWith("com.flystore.contratos.")) esperado = "DTOs";
                     else if (pkg.startsWith("com.flystore.persistencia.")) esperado = "Persistencia";
                     else if (pkg.contains(".aplicacion") || pkg.equals("com.flystore.dominio.excepcion")) esperado = "Negocio";
-                    else if (pkg.contains(".infraestructura.supabase") || Set.of("SupabaseProperties.java", "RestClientConfig.java")
+                    else if (pkg.contains(".infraestructura.supabase") || pkg.contains(".infraestructura.whatsapp")
+                            || Set.of("SupabaseProperties.java", "RestClientConfig.java")
                             .contains(file.getFileName().toString())) esperado = "Infraestructura";
                     else esperado = "API";
                     assertEquals(esperado, modulo, file.toString());

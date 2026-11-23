@@ -10,6 +10,8 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,5 +53,19 @@ public class ClienteDAO implements IClienteDAO {
     @Override
     public void guardarDatosEntrega(DatosEntrega datosEntrega) {
         entityManager.persist(datosEntrega);
+    }
+
+    @Override
+    public List<Cliente> buscarPorNombreOTelefono(String texto) {
+        // Los comodines de LIKE que escriba el usuario se descartan.
+        var limpio = texto == null ? "" : texto.replaceAll("[%_]", "").trim().toLowerCase(Locale.ROOT);
+        if (limpio.isEmpty()) return List.of();
+        var digitos = limpio.replaceAll("\\D", "");
+        boolean esTelefono = !digitos.isEmpty() && limpio.matches("[\\d\\s()+-]+");
+        if (esTelefono)
+            return entityManager.createQuery("select c from Cliente c where replace(replace(replace(coalesce(c.telefono, ''), ' ', ''), '-', ''), '+', '') like :telefono", Cliente.class)
+                    .setParameter("telefono", "%" + digitos + "%").getResultList();
+        return entityManager.createQuery("select c from Cliente c where lower(concat(coalesce(c.nombre, ''), ' ', coalesce(c.apellidos, ''))) like :nombre", Cliente.class)
+                .setParameter("nombre", "%" + limpio.replaceAll("\\s+", " ") + "%").getResultList();
     }
 }

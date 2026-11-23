@@ -5,12 +5,14 @@ import com.flystore.dominio.excepcion.NegocioException;
 import com.flystore.dominio.excepcion.TipoError;
 import com.flystore.modulos.autenticacion.aplicacion.IClienteBO;
 import com.flystore.modulos.gestionarventa.aplicacion.*;
+import com.flystore.modulos.gestionarventa.aplicacion.mappers.PedidoAdminMapper;
 import com.flystore.modulos.gestionarventa.aplicacion.mappers.PedidoVentaMapper;
 import com.flystore.modulos.gestionarventa.aplicacion.modelo.ArchivoComprobante;
 import com.flystore.modulos.gestionarventa.aplicacion.puertos.IAlmacenComprobantes;
 import com.flystore.persistencia.dao.interfaces.*;
 import com.flystore.persistencia.entidades.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.support.TransactionOperations;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
@@ -30,6 +32,7 @@ class PedidoVentaBOTest {
     private final List<PedidoVenta> pedidos = new ArrayList<>();
     private long siguienteIdPedido = 20;
     private List<PedidoVenta> vencidos = List.of();
+    private Object[] argumentosVencidos;
     private final List<Pago> pagos = new ArrayList<>();
     private final List<String> subidos = new ArrayList<>();
     private long siguienteIdLinea = 100;
@@ -45,7 +48,7 @@ class PedidoVentaBOTest {
             case "listarPorEstados" -> pedidos.stream().filter(p -> ((Collection<?>) a[0]).contains(p.getEstadoVenta())).toList();
             case "guardarPedidoVenta" -> { simularFlush((PedidoVenta) a[0]); yield null; }
             case "guardarPago" -> { pagos.add((Pago) a[0]); yield null; }
-            case "listarPorEstadosRegistradosAntesDe" -> vencidos;
+            case "listarPorEstadosRegistradosAntesDe" -> { argumentosVencidos = a; yield vencidos; }
             default -> throw new AssertionError("IPedidoVentaDAO." + m);
         });
         var clienteDAO = puerto(IClienteDAO.class, (m, a) -> {
@@ -75,10 +78,16 @@ class PedidoVentaBOTest {
             case "generarUrlTemporal" -> "https://firmado/" + a[0] + "?expira=" + a[1];
             default -> throw new AssertionError("IAlmacenComprobantes." + m);
         });
+        // CU-02 no escribe historial ni avisa al cliente: eso es de CU-04 (AdministrarPedidosTest).
+        var historialBO = puerto(IHistorialPedidoBO.class, (m, a) -> {
+            if (!m.equals("listarPorPedido")) throw new AssertionError("IHistorialPedidoBO." + m);
+            return List.of();
+        });
         var productoVentaBO = new ProductoVentaBO();
         return new PedidoVentaBO(pedidoDAO, clienteDAO, new DetallePedidoBO(productoVentaBO), productoVentaBO,
-                new VarianteProductoBO(varianteDAO), new CodigoDescuentoBO(codigoDAO, RELOJ), clienteBO, almacen,
-                new PedidoVentaMapper(), RELOJ, "52 662 123 4567");
+                new VarianteProductoBO(varianteDAO), new CodigoDescuentoBO(codigoDAO, RELOJ), clienteBO, historialBO, almacen,
+                (telefono, mensaje) -> { throw new AssertionError("CU-02 no avisa al cliente"); },
+                new PedidoVentaMapper(), new PedidoAdminMapper(), RELOJ, "52 662 123 4567", TransactionOperations.withoutTransaction());
     }
 
     /** Como el flush de JPA: asigna id a las líneas nuevas. */
@@ -287,42 +296,7 @@ class PedidoVentaBOTest {
         assertEquals(EstadoVenta.PENDIENTE_COMPROBANTE, pedido.getEstadoVenta());
     }
 
-    @Test void confirmarTransferenciaDescuentaStockYPasaAPagado() {
-        var registrado = registrar(2, "TRANSFERENCIA", true);
-        var pagado = bo.confirmarPago(String.valueOf(registrado.id()), null);
-        assertEquals("PAGADO", pagado.estadoVenta());
-        assertEquals(6, roja.getStock());
-        assertEquals(EstadoPago.COMPLETADO, pagos.get(0).getEstadoPago());
-        assertEquals(LocalDate.now(RELOJ), pagos.get(0).getFechaPago());
-        var repetido = assertThrows(NegocioException.class, () -> bo.confirmarPago(String.valueOf(registrado.id()), null));
-        assertEquals(TipoError.CONFLICTO_DE_DATOS, repetido.getTipoError());
-        assertEquals(6, roja.getStock(), "Confirmar dos veces no descuenta dos veces");
-    }
-
-    @Test void confirmarEfectivoExigeCantidadRecibidaYCalculaElCambio() {
-        var registrado = registrar(2, "EFECTIVO", false);
-        var id = String.valueOf(registrado.id());
-        assertThrows(NegocioException.class, () -> bo.confirmarPago(id, new ConfirmarPagoPeticionDTO(null)));
-        assertThrows(NegocioException.class, () -> bo.confirmarPago(id, new ConfirmarPagoPeticionDTO(new BigDecimal("299.99"))));
-        assertEquals(8, roja.getStock());
-        var pagado = bo.confirmarPago(id, new ConfirmarPagoPeticionDTO(new BigDecimal("500")));
-        assertEquals("PAGADO", pagado.estadoVenta());
-        assertMonto("500.00", pagado.metodoPago().cantidadRecibida());
-        assertMonto("200.00", pagado.metodoPago().cambio());
-        assertEquals(6, roja.getStock());
-    }
-
-    @Test void confirmarSinStockSuficienteConservaElEstado() {
-        var registrado = registrar(5, "TRANSFERENCIA", true);
-        roja.setStock(3);
-        var error = assertThrows(NegocioException.class, () -> bo.confirmarPago(String.valueOf(registrado.id()), null));
-        assertEquals(TipoError.CONFLICTO_DE_DATOS, error.getTipoError());
-        assertTrue(error.getMessage().contains("necesita 5 y hay 3"), error.getMessage());
-        assertEquals(3, roja.getStock());
-        assertEquals(EstadoVenta.PAGO_EN_REVISION, pedidos.get(0).getEstadoVenta());
-    }
-
-    @Test void listaPorConfirmarEnOrdenFifoYEnlaceAlComprobante() {
+    @Test void listaPorConfirmarEnOrdenFifo() {
         var efectivo = registrar(1, "EFECTIVO", false);
         var transferencia = registrar(1, "TRANSFERENCIA", true);
         var sinComprobante = registrar(1, "TRANSFERENCIA", false);
@@ -331,10 +305,6 @@ class PedidoVentaBOTest {
         var lista = bo.listarPorConfirmar();
         assertEquals(List.of(transferencia.id(), efectivo.id()), lista.stream().map(PedidoVentaDTO::id).toList());
         assertFalse(lista.stream().anyMatch(p -> p.id().equals(sinComprobante.id())), "Sin comprobante no hay nada que confirmar");
-        var url = bo.obtenerUrlComprobante(String.valueOf(transferencia.id()));
-        assertTrue(url.url().startsWith("https://firmado/pedidos/7/"));
-        assertEquals(300, url.expiraEnSegundos());
-        assertThrows(NegocioException.class, () -> bo.obtenerUrlComprobante(String.valueOf(efectivo.id())));
     }
 
     @Test void pedidosSinPagoVencidosSeCancelanYLiberanElCodigo() {
@@ -347,5 +317,8 @@ class PedidoVentaBOTest {
         assertEquals(1, bo.cancelarPedidosVencidos());
         assertEquals(EstadoVenta.CANCELADO_VENCIMIENTO, pedido.getEstadoVenta());
         assertEquals(0, fly10.getUsosActuales());
+        // Registrados hace más de 42 h, o con el vencimiento nuevo de un comprobante rechazado ya pasado.
+        assertEquals(OffsetDateTime.now(RELOJ).minusHours(42), argumentosVencidos[1]);
+        assertEquals(OffsetDateTime.now(RELOJ), argumentosVencidos[2]);
     }
 }

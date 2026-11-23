@@ -4,6 +4,7 @@ import com.flystore.contratos.gestionarventa.DatosEntregaDTO;
 import com.flystore.persistencia.entidades.Cliente;
 import com.flystore.persistencia.entidades.DatosEntrega;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,4 +47,11 @@ public interface IClienteBO {
      * Con guardarComoPredeterminada, quedan como predeterminados del cliente.
      */
     DatosEntrega registrarDatosEntrega(Long clienteId, DatosEntregaDTO datos);
+
+    /**
+     * CU-04 · Ids de los clientes cuyo nombre completo contiene el texto o, si el texto son solo
+     * dígitos, cuyo teléfono los contiene. La búsqueda de pedidos del personal los usa para
+     * encontrar los pedidos de un cliente.
+     */
+    List<Long> buscarIdsPorNombreOTelefono(String texto);
 }
