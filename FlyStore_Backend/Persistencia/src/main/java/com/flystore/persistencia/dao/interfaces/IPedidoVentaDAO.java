@@ -1,5 +1,7 @@
 package com.flystore.persistencia.dao.interfaces;
 
+import com.flystore.persistencia.consultas.CriteriosBusquedaPedidos;
+import com.flystore.persistencia.consultas.PaginaPedidos;
 import com.flystore.persistencia.entidades.EstadoVenta;
 import com.flystore.persistencia.entidades.Pago;
 import com.flystore.persistencia.entidades.PedidoVenta;
@@ -47,8 +49,20 @@ public interface IPedidoVentaDAO {
     /** Pedidos registrados de un cliente, del más reciente al más antiguo. */
     List<PedidoVenta> listarRegistradosPorCliente(Long clienteId);
 
-    /** Pedidos en alguno de los estados dados registrados antes de la fecha límite. */
-    List<PedidoVenta> listarPorEstadosRegistradosAntesDe(Collection<EstadoVenta> estados, OffsetDateTime limite);
+    /**
+     * Pedidos en alguno de los estados dados cuyo plazo ya venció: los registrados antes de
+     * {@code limite} o, si tienen vencimiento propio (CU-04, comprobante rechazado), los que lo
+     * superaron en {@code ahora}.
+     */
+    List<PedidoVenta> listarPorEstadosRegistradosAntesDe(Collection<EstadoVenta> estados, OffsetDateTime limite, OffsetDateTime ahora);
+
+    /**
+     * CU-04 · Página de pedidos registrados (sin carritos) que cumplen los criterios, del más
+     * reciente al más antiguo, con cliente, entrega y pago. El texto de los criterios se busca
+     * dentro del folio; {@code clienteIds} son los clientes cuyo nombre o teléfono coincide con ese
+     * mismo texto, y sus pedidos también entran en el resultado. Sin texto se ignora.
+     */
+    PaginaPedidos buscarPorCriterios(CriteriosBusquedaPedidos criterios, List<Long> clienteIds);
 
     /** Persiste el pago de un pedido (PagoTransferencia o PagoEfectivo). */
     void guardarPago(Pago pago);

@@ -10,7 +10,7 @@ BEGIN
     IF EXISTS (
         SELECT 1 FROM information_schema.tables
         WHERE table_schema = 'public'
-          AND table_name = ANY (ARRAY['admin', 'categoria', 'cliente', 'codigo_descuento', 'color', 'dato_bancario', 'datos_entrega', 'detalle_pedido', 'detalle_pedido_codigo_descuento', 'detalle_pedido_variante_producto', 'empleado', 'imagen_producto', 'marca', 'pago', 'pago_efectivo', 'pago_transferencia', 'pedido_venta', 'precio_producto', 'producto', 'producto_codigo_descuento', 'subcategoria', 'talla', 'tipo_talla', 'usuario', 'variante_producto'])
+          AND table_name = ANY (ARRAY['admin', 'categoria', 'cliente', 'codigo_descuento', 'color', 'dato_bancario', 'datos_entrega', 'detalle_pedido', 'detalle_pedido_codigo_descuento', 'detalle_pedido_variante_producto', 'empleado', 'imagen_producto', 'marca', 'pago', 'pago_efectivo', 'pago_transferencia', 'pedido_venta', 'precio_producto', 'producto', 'producto_codigo_descuento', 'subcategoria', 'talla', 'tipo_talla', 'usuario', 'variante_producto', 'historial_pedido'])
     ) THEN
         RAISE EXCEPTION 'Ya existen tablas de FlyStore. No se modificó el esquema; este script es solo para una BD nueva.';
     END IF;
@@ -30,17 +30,17 @@ create type TipoCliente as enum ('BASE','MAYOREO','DISTRIBUIDOR','EMPRENDEDOR','
 
     create cast (TipoPrecio as varchar) with inout as implicit;
 
-    create type EstadoPago as enum ('PENDIENTE','EN_PROCESO','COMPLETADO');
-
-    create cast (varchar as EstadoPago) with inout as implicit;
-
-    create cast (EstadoPago as varchar) with inout as implicit;
-
     create type EstadoVenta as enum ('PENDIENTE','APARTADO_PENDIENTE_PAGO','PENDIENTE_COMPROBANTE','PAGO_EN_REVISION','PAGADO','PREPARACION','ENVIADO','ENTREGADO','CANCELADO','CANCELADO_VENCIMIENTO');
 
     create cast (varchar as EstadoVenta) with inout as implicit;
 
     create cast (EstadoVenta as varchar) with inout as implicit;
+
+    create type EstadoPago as enum ('PENDIENTE','EN_PROCESO','COMPLETADO');
+
+    create cast (varchar as EstadoPago) with inout as implicit;
+
+    create cast (EstadoPago as varchar) with inout as implicit;
 
     create type EstadoProducto as enum ('PUBLICADO','STOCK_BAJO','INACTIVO','BORRADOR');
 
@@ -141,6 +141,18 @@ create type TipoCliente as enum ('BASE','MAYOREO','DISTRIBUIDOR','EMPRENDEDOR','
         primary key (id)
     );
 
+    create table historial_pedido (
+        comprobante_rechazado boolean not null,
+        fecha_hora timestamp(6) with time zone not null,
+        id bigserial not null,
+        pedido_venta_id bigint not null,
+        motivo varchar(500),
+        usuario varchar(255) not null,
+        estado_anterior EstadoVenta,
+        estado_nuevo EstadoVenta not null,
+        primary key (id)
+    );
+
     create table imagen_producto (
         orden integer,
         color_id bigint,
@@ -183,13 +195,17 @@ create type TipoCliente as enum ('BASE','MAYOREO','DISTRIBUIDOR','EMPRENDEDOR','
 
     create table pedido_venta (
         costo_envio numeric(38,2),
+        entrega_local boolean,
         cliente_id bigint not null,
         datos_entrega_id bigint,
         fecha_hora_pedido timestamp(6) with time zone,
+        fecha_limite_pago timestamp(6) with time zone,
         id bigserial not null,
         pago_id bigint,
         comprobante_pedido_url varchar(255),
         folio varchar(255) unique,
+        guia varchar(255),
+        paqueteria varchar(255),
         estado_venta EstadoVenta,
         primary key (id)
     );
@@ -320,6 +336,11 @@ create type TipoCliente as enum ('BASE','MAYOREO','DISTRIBUIDOR','EMPRENDEDOR','
        add constraint FK21ddfrduanruae8nw4y1gbfw 
        foreign key (id) 
        references usuario;
+
+    alter table if exists historial_pedido 
+       add constraint FKgc5x5q6q10aix252f6wfgyye8 
+       foreign key (pedido_venta_id) 
+       references pedido_venta;
 
     alter table if exists imagen_producto 
        add constraint FKr9tk0972uq92e5ctwjrkpdttc 
@@ -484,6 +505,10 @@ BEGIN
 END
 $restricciones$;
 
+-- CU-04 Administrar pedidos: historial de un pedido, del cambio más reciente al más antiguo.
+-- Mismo índice que 005_administrar_pedidos.sql.
+CREATE INDEX IF NOT EXISTS idx_historial_pedido_pedido_venta ON historial_pedido (pedido_venta_id, fecha_hora DESC);
+
 -- Las consultas de la aplicación pasan por el backend, que valida sesión y roles.
 -- RLS sin políticas evita exponer estas tablas mediante las claves públicas de Supabase.
 ALTER TABLE public.admin ENABLE ROW LEVEL SECURITY;
@@ -496,6 +521,7 @@ ALTER TABLE public.datos_entrega ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.detalle_pedido ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.detalle_pedido_codigo_descuento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.detalle_pedido_variante_producto ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.historial_pedido ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.empleado ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.imagen_producto ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.marca ENABLE ROW LEVEL SECURITY;

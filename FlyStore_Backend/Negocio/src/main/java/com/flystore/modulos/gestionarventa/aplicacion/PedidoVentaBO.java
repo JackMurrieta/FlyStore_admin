@@ -317,8 +317,8 @@ public class PedidoVentaBO implements IPedidoVentaBO {
     @Override
     @Transactional
     public int cancelarPedidosVencidos() {
-        var limite = OffsetDateTime.now(reloj).minus(PLAZO_PAGO);
-        var vencidos = pedidoVentaDAO.listarPorEstadosRegistradosAntesDe(ESTADOS_SIN_PAGO, limite);
+        var ahora = OffsetDateTime.now(reloj);
+        var vencidos = pedidoVentaDAO.listarPorEstadosRegistradosAntesDe(ESTADOS_SIN_PAGO, ahora.minus(PLAZO_PAGO), ahora);
         for (var pedido : vencidos) {
             codigoDescuentoBO.liberarUso(detallePedidoBO.obtenerCodigosAplicados(pedido));
             pedido.setEstadoVenta(EstadoVenta.CANCELADO_VENCIMIENTO);
@@ -335,10 +335,14 @@ public class PedidoVentaBO implements IPedidoVentaBO {
         return tieneTexto(metodoPago.comprobanteRuta()) ? EstadoVenta.PAGO_EN_REVISION : EstadoVenta.PENDIENTE_COMPROBANTE;
     }
 
-    /** Vencimiento de un pedido registrado sin pago; null en los demás estados. */
+    /**
+     * Vencimiento de un pedido registrado sin pago; null en los demás estados. Si el personal
+     * rechazó su comprobante (CU-04), manda el vencimiento nuevo guardado en el pedido.
+     */
     OffsetDateTime calcularFechaLimite(PedidoVenta pedido) {
-        return ESTADOS_SIN_PAGO.contains(pedido.getEstadoVenta()) && pedido.getFechaHoraPedido() != null
-                ? pedido.getFechaHoraPedido().plus(PLAZO_PAGO) : null;
+        if (!ESTADOS_SIN_PAGO.contains(pedido.getEstadoVenta())) return null;
+        if (pedido.getFechaLimitePago() != null) return pedido.getFechaLimitePago();
+        return pedido.getFechaHoraPedido() != null ? pedido.getFechaHoraPedido().plus(PLAZO_PAGO) : null;
     }
 
     /** Totales del pedido con los precios ya guardados en sus líneas. */

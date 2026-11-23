@@ -3,6 +3,7 @@ package com.flystore.persistencia.dao.interfaces;
 import com.flystore.persistencia.entidades.Cliente;
 import com.flystore.persistencia.entidades.DatosEntrega;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +40,12 @@ public interface IClienteDAO {
      * Serializa la creación del carrito del mismo cliente.
      */
     Optional<Cliente> bloquearPorId(Long id);
+
+    /**
+     * CU-04 · Clientes cuyo nombre completo contiene el texto (sin distinguir mayúsculas) o, si el
+     * texto son solo dígitos, cuyo teléfono los contiene.
+     */
+    List<Cliente> buscarPorNombreOTelefono(String texto);
 
     /** Persiste unos datos de entrega nuevos del cliente. */
     void guardarDatosEntrega(DatosEntrega datosEntrega);

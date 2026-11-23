@@ -9,6 +9,8 @@ El script inicial ya incorpora el cambio de `001_catalogo.sql`. Para una instala
 
 Si las tablas ya existen pero el catálogo está vacío, aplicar `001_catalogo.sql` y después `002_datos_prueba_catalogo.sql`. Este último carga las mismas categorías, tallas, colores y tres productos de demostración sin crear tablas. Se detiene si las tablas de catálogo ya contienen datos, evitando duplicados. No usarlo después del inicial `000`, que ya incluye esos datos.
 
+`005_administrar_pedidos.sql` (CU-04) es para bases que ya existen: agrega a `pedido_venta` el vencimiento propio y los datos de envío, y crea `historial_pedido`. Solo añade columnas vacías y una tabla; se puede ejecutar más de una vez y el backend anterior sigue funcionando después de aplicarla. Una base nueva ya lo recibe con `000`.
+
 El inicial se detiene si detecta una tabla existente de FlyStore. No contiene borrado ni reemplazo de tablas o datos. Si falla, revisar el error antes de intentar otra cosa; no eliminar tablas para forzar su ejecución.
 
 Las tablas tienen RLS habilitado sin políticas de acceso público. El backend actual se conecta por JDBC con el usuario de conexión del proyecto y aplica la autorización en Spring Security. Los datos no se consultan directamente desde el navegador con las claves públicas de Supabase.

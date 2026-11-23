@@ -24,4 +24,10 @@ public interface IVarianteProductoBO {
      * Si alguna no alcanza lanza CONFLICTO_DE_DATOS y no descuenta nada (la transacción se revierte).
      */
     void descontarExistencia(PedidoVenta pedido);
+
+    /**
+     * CU-04 · Regresa al stock las piezas de todas las líneas del pedido, con bloqueo por variante.
+     * Se usa al cancelar un pedido cuyo stock ya se había descontado (PAGADO).
+     */
+    void reponerExistencia(PedidoVenta pedido);
 }
